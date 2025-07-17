@@ -7,7 +7,8 @@
     "dev:backend": "cd BACKEND && npm run dev",
     "dev:frontend": "cd FRONTEND && npm run dev:local",
     "dev:frontend:prod": "cd FRONTEND && npm run dev:prod",
-    "build": "cd FRONTEND && npm run build:prod",
+    "build": "cd FRONTEND && npm run build",
+    "build:prod": "cd FRONTEND && npm run build:prod",
     "install:all": "npm install && cd BACKEND && npm install && cd ../FRONTEND && npm install",
     "clean:all": "cd BACKEND && npm run clean && cd ../FRONTEND && npm run clean",
     "start:prod": "cd BACKEND && npm start"

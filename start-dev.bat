@@ -23,12 +23,6 @@ if not exist "FRONTEND\node_modules" (
 )
 
 echo.
-echo Setting up environment for local development...
-cd FRONTEND
-copy .env.local .env >nul 2>&1
-cd ..
-
-echo.
 echo Starting development servers...
 echo Backend will run on: http://localhost:3000
 echo Frontend will run on: http://localhost:5173

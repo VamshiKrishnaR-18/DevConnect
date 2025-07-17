@@ -57,7 +57,7 @@ Already created in `FRONTEND/vercel.json` with production settings.
 3. **Configure Build Settings**
    - **Framework Preset**: Vite
    - **Root Directory**: `FRONTEND`
-   - **Build Command**: `npm run build:prod` (or leave default)
+   - **Build Command**: `npm run build` (default works perfectly)
    - **Output Directory**: `dist`
 
 4. **Set Environment Variables (Optional)**
@@ -93,7 +93,11 @@ npm run dev:prod
 ### **Production Build**
 ```bash
 npm run build:prod
-# Automatically uses production environment
+# Uses production mode explicitly
+
+# OR (works the same on Vercel)
+npm run build
+# Automatically detects production environment
 ```
 
 ### **Vercel Deployment**

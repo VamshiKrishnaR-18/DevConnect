@@ -5,13 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "dev:local": "copy .env.local .env && vite --host",
-    "dev:prod": "copy .env.production .env && vite --host",
+    "dev:local": "vite --host --mode development",
+    "dev:prod": "vite --host --mode production",
     "build": "vite build",
-    "build:prod": "copy .env.production .env && vite build",
+    "build:prod": "vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview",
-    "clean": "rmdir /s /q dist && rmdir /s /q node_modules\\.vite"
+    "clean": "rimraf dist node_modules/.vite"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.8",
@@ -32,6 +32,7 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
     "postcss": "^8.5.4",
+    "rimraf": "^6.0.1",
     "tailwindcss": "^4.1.8",
     "vite": "^6.3.5"
   }

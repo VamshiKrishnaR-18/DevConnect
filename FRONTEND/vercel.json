@@ -1,18 +1,11 @@
 {
-  "buildCommand": "npm run build:prod",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
   "env": {
     "VITE_API_BASE_URL": "https://devconnect-f4au.onrender.com",
     "VITE_SOCKET_URL": "https://devconnect-f4au.onrender.com",
     "VITE_NODE_ENV": "production"
-  },
-  "build": {
-    "env": {
-      "VITE_API_BASE_URL": "https://devconnect-f4au.onrender.com",
-      "VITE_SOCKET_URL": "https://devconnect-f4au.onrender.com",
-      "VITE_NODE_ENV": "production"
-    }
   },
   "headers": [
     {
