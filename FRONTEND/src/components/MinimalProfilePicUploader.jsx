@@ -57,16 +57,17 @@ function MinimalProfilePicUploader({ onUpload }) {
 
     try {
       const res = await axios.put(
-        "/api/users/profilepic",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
-          timeout: 30000, // 30 second timeout
-        }
-      );
+  "https://devconnect-f4au.onrender.com/api/users/profilepic",
+  formData,
+  {
+    headers: {
+      "Content-Type": "multipart/form-data",
+      Authorization: `Bearer ${token}`,
+    },
+    timeout: 30000, // 30 second timeout
+  }
+);
+
       onUpload(res.data.profilepic);
       setFile(null);
     } catch (error) {
