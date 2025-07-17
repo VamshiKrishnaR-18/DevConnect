@@ -47,8 +47,6 @@ app.set("io", io);
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
       "https://dev-connect-beryl.vercel.app",  // ✅ Add this
       process.env.FRONTEND_URL
     ].filter(Boolean),
