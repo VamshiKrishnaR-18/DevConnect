@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { authAPI } from "../utils/api";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -44,16 +44,11 @@ function Register() {
     }
 
     try {
-      
-      const response = await axios.post(
-  'https://devconnect-f4au.onrender.com/api/auth/register',
-  {
-    username,
-    email,
-    password,
-  },
-  { withCredentials: true }
-);
+      const response = await authAPI.register({
+        username,
+        email,
+        password,
+      });
 
       setSuccess("Registration successful! Redirecting to login...");
       setTimeout(() => {
