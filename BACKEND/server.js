@@ -49,11 +49,13 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:5174",
+      "https://dev-connect-beryl.vercel.app",  // ✅ Add this
       process.env.FRONTEND_URL
     ].filter(Boolean),
     credentials: true,
   })
 );
+
 
 // Request logging middleware
 app.use((req, res, next) => {
