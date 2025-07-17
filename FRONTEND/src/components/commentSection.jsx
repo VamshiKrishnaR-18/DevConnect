@@ -36,7 +36,7 @@ export default function CommentSection({ postId }) {
 
     try {
       const res = await axios.post(
-        "/api/comments",
+  "https://devconnect-f4au.onrender.com/api/comments",
         { postId, text: newComment },
         {
           headers: {
@@ -65,7 +65,7 @@ export default function CommentSection({ postId }) {
     }
 
     try {
-      await axios.delete(`/api/comments/${commentId}`, {
+      await axios.delete(`https://devconnect-f4au.onrender.com/api/comments/${commentId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
