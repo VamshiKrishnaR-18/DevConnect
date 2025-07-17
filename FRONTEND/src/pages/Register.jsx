@@ -44,8 +44,7 @@ function Register() {
     }
 
     try {
-      const response = await axios.post(
-        "/api/auth/register",
+      const response = await axios.post('https://devconnect-f4au.onrender.com/api/auth/register', userData, { withCredentials: true });,
         {
           username,
           email,
