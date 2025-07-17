@@ -54,7 +54,7 @@ export default function Navbar() {
                 <>
                   {/* Welcome Message - Hidden on smaller screens */}
                   <span className="hidden lg:block text-gray-600 text-sm">
-                    Welcome back, <span className="font-medium text-blue-600">{user.username}</span>
+                    Welcome, <span className="font-medium text-blue-600">{user.username}</span>
                   </span>
 
                   {/* Navigation Links */}
