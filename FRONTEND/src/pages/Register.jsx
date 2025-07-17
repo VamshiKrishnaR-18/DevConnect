@@ -44,13 +44,16 @@ function Register() {
     }
 
     try {
-      const response = await axios.post('https://devconnect-f4au.onrender.com/api/auth/register', userData, { withCredentials: true });
-        {
-          username,
-          email,
-          password,
-        }
-      );
+      
+      const response = await axios.post(
+  'https://devconnect-f4au.onrender.com/api/auth/register',
+  {
+    username,
+    email,
+    password,
+  },
+  { withCredentials: true }
+);
 
       setSuccess("Registration successful! Redirecting to login...");
       setTimeout(() => {
