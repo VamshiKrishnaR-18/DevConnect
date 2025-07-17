@@ -23,7 +23,7 @@ function Profile() {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get(`/api/users/profile/${username}`);
+        const response = await axios.get(`https://devconnect-f4au.onrender.com/api/users/profile/${username}`);
         setProfile(response.data);
       } catch (err) {
         console.error("Error fetching profile:", err);
