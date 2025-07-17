@@ -1,9 +1,9 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { AuthContext } from "../contexts/AuthContext";
+import { authAPI } from "../utils/api";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -25,11 +25,7 @@ function Login() {
     }
 
     try {
-      const response = await axios.post(
-  "https://devconnect-f4au.onrender.com/api/auth/login",
-  { email, password },
-  { withCredentials: true }
-);
+      const response = await authAPI.login({ email, password });
 
       login(response.data.user, response.data.token);
       navigate("/feed");

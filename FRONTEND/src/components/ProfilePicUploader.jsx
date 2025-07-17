@@ -1,5 +1,5 @@
-import axios from "axios";
 import { useState } from "react";
+import { usersAPI } from "../utils/api";
 
 function ProfilePicUploader({ onUpload }) {
   const [file, setFile] = useState(null);
@@ -85,17 +85,8 @@ function ProfilePicUploader({ onUpload }) {
     formData.append("profilepic", file);
 
     try {
-      const res = await axios.put(
-        "https://devconnect-f4au.onrender.com/api/users/profilepic",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
-          timeout: 30000, // 30 second timeout
-        }
-      );
+      const res = await usersAPI.updateProfilePic(formData);
+
       onUpload(res.data.profilepic);
       setFile(null);
       setPreview(null);
