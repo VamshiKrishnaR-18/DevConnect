@@ -86,7 +86,7 @@ function ProfilePicUploader({ onUpload }) {
 
     try {
       const res = await axios.put(
-        "/api/users/profilepic",
+        "https://devconnect-f4au.onrender.com/api/users/profilepic",
         formData,
         {
           headers: {
