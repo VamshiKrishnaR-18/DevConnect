@@ -99,9 +99,12 @@ function Profile() {
     setFollowLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const endpoint = isFollowing
-        ? `/api/users/unfollow/${profile.user._id}`
-        : `/api/users/follow/${profile.user._id}`;
+      const BASE_URL = "https://devconnect-f4au.onrender.com";
+
+const endpoint = isFollowing
+  ? `${BASE_URL}/api/users/unfollow/${profile.user._id}`
+  : `${BASE_URL}/api/users/follow/${profile.user._id}`;
+
 
       await axios.put(endpoint, {}, {
         headers: {
