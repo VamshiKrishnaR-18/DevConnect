@@ -8,7 +8,7 @@ export const SocketProvider = ({ children }) => {
 
     useEffect(() => {
         // Initialize socket connection
-        const socketInstance = io("http://localhost:3000", {
+        const socketInstance = io("https://devconnect-f4au.onrender.com", {
             autoConnect: true,
             reconnection: true,
             reconnectionDelay: 1000,
