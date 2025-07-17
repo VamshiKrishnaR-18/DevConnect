@@ -13,7 +13,8 @@ export default function CommentSection({ postId }) {
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const res = await axios.get(`/api/comments/${postId}`);
+        const res = await axios.get(`https://devconnect-f4au.onrender.com/api/comments/${postId}`);
+        
         setComments(res.data.comments);
       } catch (err) {
         console.error("Error fetching comments:", err);
