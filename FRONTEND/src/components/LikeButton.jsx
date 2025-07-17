@@ -28,15 +28,15 @@ export default function LikeButton({ post, userId, onLike }) {
     setLiking(true);
     try {
       const res = await axios.put(
-        `/api/likes/${post._id}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      
+  `https://devconnect-f4au.onrender.com/api/likes/${post._id}`,
+  {},
+  {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  }
+);
+
       onLike(res.data.likes); // Updated like array
     } catch (err) {
       console.error("Like error:", err);
