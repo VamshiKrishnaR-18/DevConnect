@@ -25,10 +25,11 @@ function Login() {
     }
 
     try {
-      const response = await axios.post("/api/auth/login", {
-        email,
-        password,
-      });
+      const response = await axios.post(
+  "https://devconnect-f4au.onrender.com/api/auth/login",
+  { email, password },
+  { withCredentials: true }
+);
 
       login(response.data.user, response.data.token);
       navigate("/feed");
