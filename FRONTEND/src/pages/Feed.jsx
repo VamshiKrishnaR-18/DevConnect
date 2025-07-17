@@ -85,7 +85,11 @@ function Feed() {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("/api/posts");
+      const response = await axios.get(
+  "https://devconnect-f4au.onrender.com/api/posts",
+  { withCredentials: true }
+);
+
       setPosts(response.data.posts || []);
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -110,14 +114,14 @@ function Feed() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "/api/posts",
-        { content: newPost },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  "https://devconnect-f4au.onrender.com/api/posts",
+  { content: newPost },
+  {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true,
+  }
+);
+
 
       setPosts([response.data.post, ...posts]);
       setNewPost("");
