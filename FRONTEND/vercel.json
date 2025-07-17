@@ -1,0 +1,42 @@
+{
+  "buildCommand": "npm run build:prod",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "env": {
+    "VITE_API_BASE_URL": "https://devconnect-f4au.onrender.com",
+    "VITE_SOCKET_URL": "https://devconnect-f4au.onrender.com",
+    "VITE_NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "VITE_API_BASE_URL": "https://devconnect-f4au.onrender.com",
+      "VITE_SOCKET_URL": "https://devconnect-f4au.onrender.com",
+      "VITE_NODE_ENV": "production"
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://devconnect-f4au.onrender.com/api/$1"
+    }
+  ]
+}

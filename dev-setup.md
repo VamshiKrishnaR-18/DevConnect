@@ -155,6 +155,23 @@ DevConnect/
 - `npm run start` - Production start
 - `npm run clean` - Clean uploads and cache
 
+## 🚀 Deployment
+
+### **Vercel Deployment (Frontend)**
+Your app automatically detects production environment when deployed to Vercel:
+
+1. Push code to GitHub
+2. Import project to Vercel (select `FRONTEND` folder)
+3. Deploy - no additional configuration needed!
+
+See `DEPLOYMENT.md` for detailed deployment instructions.
+
+### **Environment Detection**
+The app automatically switches to production mode when:
+- Deployed to Vercel (`import.meta.env.PROD` is true)
+- Hostname is not localhost
+- `VITE_NODE_ENV=production` is set
+
 ## Need Help?
 
 If you encounter any issues:
@@ -162,3 +179,4 @@ If you encounter any issues:
 2. Verify environment variables are correct
 3. Clear browser cache and restart servers
 4. Check browser console for detailed error messages
+5. See `DEPLOYMENT.md` for deployment-specific issues

@@ -1,13 +1,39 @@
+// Environment detection
+const isProduction = import.meta.env.PROD ||
+                    import.meta.env.VITE_NODE_ENV === 'production' ||
+                    window.location.hostname !== 'localhost';
+
+const isDevelopment = !isProduction;
+
+// Debug logging (only in development)
+if (isDevelopment) {
+  console.log('🔧 DevConnect Environment Debug:', {
+    'import.meta.env.PROD': import.meta.env.PROD,
+    'VITE_NODE_ENV': import.meta.env.VITE_NODE_ENV,
+    'hostname': window.location.hostname,
+    'isProduction': isProduction,
+    'API_BASE_URL': isProduction
+      ? (import.meta.env.VITE_API_BASE_URL || 'https://devconnect-f4au.onrender.com')
+      : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000')
+  });
+}
+
 // Environment configuration
 const config = {
-  // API Configuration
-  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
-  SOCKET_URL: import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000',
-  NODE_ENV: import.meta.env.VITE_NODE_ENV || 'development',
-  
+  // API Configuration - automatically switches based on environment
+  API_BASE_URL: isProduction
+    ? (import.meta.env.VITE_API_BASE_URL || 'https://devconnect-f4au.onrender.com')
+    : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'),
+
+  SOCKET_URL: isProduction
+    ? (import.meta.env.VITE_SOCKET_URL || 'https://devconnect-f4au.onrender.com')
+    : (import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'),
+
+  NODE_ENV: isProduction ? 'production' : 'development',
+
   // Helper methods
-  isDevelopment: () => config.NODE_ENV === 'development',
-  isProduction: () => config.NODE_ENV === 'production',
+  isDevelopment: () => isDevelopment,
+  isProduction: () => isProduction,
   
   // API endpoints
   endpoints: {
