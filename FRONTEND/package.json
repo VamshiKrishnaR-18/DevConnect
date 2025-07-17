@@ -4,10 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
+    "dev:local": "copy .env.local .env && vite --host",
+    "dev:prod": "copy .env.production .env && vite --host",
     "build": "vite build",
+    "build:prod": "copy .env.production .env && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "clean": "rmdir /s /q dist && rmdir /s /q node_modules\\.vite"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.8",

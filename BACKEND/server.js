@@ -17,13 +17,20 @@ const app = express();
 const port = process.env.PORT || 3000;
 const server = http.createServer(app);
 
+// CORS origins configuration
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://dev-connect-beryl.vercel.app",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 const io = new Server(server, {
   cors: {
-    origin: [
-      "https://dev-connect-beryl.vercel.app",
-      process.env.FRONTEND_URL
-    ].filter(Boolean),
+    origin: allowedOrigins,
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }
 })
 
@@ -46,11 +53,11 @@ app.set("io", io);
 // Middleware
 app.use(
   cors({
-    origin: [
-      "https://dev-connect-beryl.vercel.app",  // ✅ Add this
-      process.env.FRONTEND_URL
-    ].filter(Boolean),
+    origin: allowedOrigins,
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 200, // For legacy browser support
   })
 );
 

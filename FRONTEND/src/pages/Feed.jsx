@@ -1,6 +1,5 @@
 import { useSocket } from "../contexts/SocketContext";
 import React, { useState, useEffect, useContext } from "react";
-import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -9,6 +8,7 @@ import CommentSection from "../components/commentSection";
 import LikeButton from "../components/LikeButton";
 import ZoomableProfilePic from "../components/ZoomableProfilePic";
 import NotificationBar from "../components/notificationBar";
+import { postsAPI } from "../utils/api";
 
 
 
@@ -85,10 +85,7 @@ function Feed() {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-  "https://devconnect-f4au.onrender.com/api/posts",
-  { withCredentials: true }
-);
+      const response = await postsAPI.getPosts();
 
       setPosts(response.data.posts || []);
     } catch (error) {
@@ -112,16 +109,7 @@ function Feed() {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-  "https://devconnect-f4au.onrender.com/api/posts",
-  { content: newPost },
-  {
-    headers: { Authorization: `Bearer ${token}` },
-    withCredentials: true,
-  }
-);
-
+      const response = await postsAPI.createPost({ content: newPost });
 
       setPosts([response.data.post, ...posts]);
       setNewPost("");
