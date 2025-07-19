@@ -88,58 +88,17 @@ export default function Footer() {
                   Features
                 </Link>
               </li>
-              <li>
-                <Link to="/community" className="text-gray-300 hover:text-blue-400 transition-colors duration-300 text-sm">
-                  Community
-                </Link>
-              </li>
-              <li>
-                <Link to="/blog" className="text-gray-300 hover:text-blue-400 transition-colors duration-300 text-sm">
-                  Blog
-                </Link>
-              </li>
+              
+        
             </ul>
           </div>
-
-          {/* Support */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Support</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/help" className="text-gray-300 hover:text-blue-400 transition-colors duration-300 text-sm">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-gray-300 hover:text-blue-400 transition-colors duration-300 text-sm">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-gray-300 hover:text-blue-400 transition-colors duration-300 text-sm">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="text-gray-300 hover:text-blue-400 transition-colors duration-300 text-sm">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link to="/security" className="text-gray-300 hover:text-blue-400 transition-colors duration-300 text-sm">
-                  Security
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
 
         {/* Bottom Footer */}
         <div className="border-t border-gray-800 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex items-center space-x-4">
               <p className="text-gray-400 text-sm">
-                © {currentYear} DevConnect. All rights reserved.
+                © {currentYear} DevConnect.
               </p>
               <div className="hidden md:flex items-center space-x-1 text-gray-500 text-xs">
                 <span>Made with</span>
@@ -162,13 +121,6 @@ export default function Footer() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 <span>Fast</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-                <span>Open Source</span>
-              </span>
             </div>
           </div>
         </div>
