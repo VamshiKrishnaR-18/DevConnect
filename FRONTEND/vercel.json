@@ -30,6 +30,10 @@
     {
       "source": "/api/(.*)",
       "destination": "https://devconnect-f4au.onrender.com/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
     }
   ]
 }
