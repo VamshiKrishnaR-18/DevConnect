@@ -80,8 +80,8 @@ export default function CommentSection({ postId }) {
   };
 
   return (
-    <div className="p-3 border-t mt-4">
-      <h4 className="font-semibold mb-2">Comments</h4>
+    <div className="p-3 border-t dark:border-gray-600 mt-4">
+      <h4 className="font-semibold mb-2 text-gray-900 dark:text-white">Comments</h4>
       {/* Input Field */}
       <div className="flex items-center gap-2 mb-4">
         <input
@@ -89,40 +89,40 @@ export default function CommentSection({ postId }) {
           placeholder="Add a comment..."
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          className="border p-2 rounded w-full"
+          className="border dark:border-gray-600 p-2 rounded w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
         />
         <button
           onClick={handleAddComment}
-          className="bg-blue-500 text-white px-3 py-1 rounded"
+          className="bg-blue-500 dark:bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
         >
           Post
         </button>
       </div>
       {/* Loading State */}
       {loading ? (
-        <p className="text-black">Loading comments...</p>
+        <p className="text-gray-900 dark:text-white">Loading comments...</p>
       ) : !Array.isArray(comments) || comments.length === 0 ? (
-        <p className="text-black">No comments yet.</p>
+        <p className="text-gray-900 dark:text-white">No comments yet.</p>
       ) : (
         comments.map((comment) => (
-          <div key={comment._id || comment.id} className="mb-2 p-2 bg-gray-50 rounded">
+          <div key={comment._id || comment.id} className="mb-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
             <div className="flex justify-between items-center">
               <Link
                 to={`/profile/${comment.userId?.username}`}
-                className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                className="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
                 {comment.userId?.username}
               </Link>
               {comment.userId?._id === getUserIdFromToken(token) && (
                 <button
                   onClick={() => handleDelete(comment._id)}
-                  className="text-red-500 text-xs"
+                  className="text-red-500 dark:text-red-400 text-xs hover:text-red-600 dark:hover:text-red-300 transition-colors"
                 >
                   Delete
                 </button>
               )}
             </div>
-            <p className="text-sm">{comment.text}</p>
+            <p className="text-sm text-gray-800 dark:text-gray-200">{comment.text}</p>
           </div>
         ))
       )}

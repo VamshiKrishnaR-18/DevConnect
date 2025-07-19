@@ -127,7 +127,7 @@ function Feed() {
       <NotificationBar notifications={notifications} />
       <div className="p-4 max-w-xl mx-auto">
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-400 rounded">
             {error}
           </div>
         )}
@@ -138,13 +138,13 @@ function Feed() {
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
             placeholder="What's on your mind?"
-            className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border dark:border-gray-600 rounded-lg resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
             rows={3}
             disabled={posting}
           />
           <button
             type="submit"
-            className="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
+            className="mt-2 bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-blue-400 dark:disabled:bg-blue-500 disabled:cursor-not-allowed transition-colors"
             disabled={posting || !newPost.trim()}
           >
             {posting ? "Posting..." : "Post"}
@@ -155,11 +155,11 @@ function Feed() {
         <div className="space-y-6">
           {loading ? (
             <div className="text-center py-8">
-              <p>Loading posts...</p>
+              <p className="text-gray-900 dark:text-white">Loading posts...</p>
             </div>
           ) : posts.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">
+              <p className="text-gray-500 dark:text-gray-400">
                 No posts yet. Be the first to post!
               </p>
             </div>
@@ -167,7 +167,7 @@ function Feed() {
             posts.map((post) => (
               <div
                 key={post._id}
-                className="p-4 border rounded-lg bg-white shadow-sm"
+                className="p-4 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm transition-colors"
               >
                 {/* Post Header with Profile Picture */}
                 <div className="flex items-center mb-3">
@@ -182,11 +182,11 @@ function Feed() {
                   <div className="flex-1">
                     <Link
                       to={`/profile/${post.user?.username}`}
-                      className="font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                      className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     >
                       {post.user?.username || "Unknown User"}
                     </Link>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {new Date(post.createdAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -206,7 +206,7 @@ function Feed() {
                 </div>
 
                 {/* Post Content */}
-                <p className="text-gray-800 mb-2">{post.content}</p>
+                <p className="text-gray-800 dark:text-gray-200 mb-2">{post.content}</p>
 
                 {/* 🔽 Comment Section for each post */}
                 <CommentSection postId={post._id} />

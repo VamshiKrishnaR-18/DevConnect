@@ -138,7 +138,7 @@ const endpoint = isFollowing
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-100">
           <div className="max-w-4xl mx-auto p-8">
             {/* Loading Skeleton */}
             <div className="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-hidden">
@@ -204,7 +204,7 @@ const endpoint = isFollowing
           <div className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
               <svg
-                className="w-8 h-8 text-gray-400"
+                className="w-8 h-8 text-gray-400 dark:text-gray-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -232,10 +232,10 @@ const endpoint = isFollowing
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-white-900 dark:to-gray-800">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-200">
         <div className="max-w-4xl mx-auto p-8">
           {/* Main Profile Card */}
-          <div className="bg-white dark:bg-white-800 shadow-xl rounded-2xl overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-hidden">
             {/* Header Background */}
             <div className="h-32 bg-gradient-to-r from-red-300 via-purple-500 to-pink-500 relative">
               {/* Removed the black overlay that might be causing issues */}
@@ -269,10 +269,10 @@ const endpoint = isFollowing
                 {/* User Info */}
                 <div className="mt-6 space-y-4">
                   <div>
-                    <h1 className="text-3xl font-bold text-black dark:text-black">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                       {profile.user.username}
                     </h1>
-                    <div className="flex items-center justify-center mt-2 space-x-4 text-sm text-black">
+                    <div className="flex items-center justify-center mt-2 space-x-4 text-sm text-gray-600 dark:text-gray-300">
                       <span className="flex items-center">
                         <svg
                           className="w-4 h-4 mr-1"
@@ -307,26 +307,26 @@ const endpoint = isFollowing
                   {/* Stats */}
                   <div className="flex justify-center space-x-8 py-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-gray-900 dark:text-black">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
                         {profile.posts?.length || 0}
                       </div>
-                      <div className="text-sm text-gray-700 dark:text-gray-900">
+                      <div className="text-sm text-gray-700 dark:text-gray-300">
                         Posts
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-gray-900 dark:text-black">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
                         {profile.user.followers?.length || 0}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-900">
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         Followers
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-gray-900 dark:text-black">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
                         {profile.user.following?.length || 0}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-900">
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         Following
                       </div>
                     </div>
@@ -416,10 +416,10 @@ const endpoint = isFollowing
           </div>
 
           {/* Posts Section */}
-          <div className="mt-8 bg-white dark:bg-gray-200 shadow-xl rounded-2xl overflow-hidden">
+          <div className="mt-8 bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-hidden">
             <div className="p-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-black flex items-center">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
                   <svg
                     className="w-6 h-6 mr-2 text-blue-500"
                     fill="none"
@@ -543,7 +543,7 @@ const endpoint = isFollowing
                 <div className="text-center py-12">
                   <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
                     <svg
-                      className="w-12 h-12 text-gray-400"
+                      className="w-12 h-12 text-gray-400 dark:text-gray-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"

@@ -49,7 +49,7 @@ export default function LikeButton({ post, userId, onLike }) {
     <button
       onClick={handleLike}
       disabled={liking || !userId}
-      className={`text-sm ${hasLiked ? "text-blue-500" : "text-gray-500"}`}
+      className={`text-sm transition-colors ${hasLiked ? "text-blue-500 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"} hover:text-blue-600 dark:hover:text-blue-300`}
     >
       {hasLiked ? "❤️" : "🤍"} {Array.isArray(post.likes) ? post.likes.length : 0}
     </button>

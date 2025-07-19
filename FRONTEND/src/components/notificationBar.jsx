@@ -6,7 +6,7 @@ export default function NotificationBar({ notifications }) {
       {notifications.slice(-5).map((note, i) => (
         <div
           key={i}
-          className="bg-blue-100 border border-blue-300 text-blue-800 px-4 py-2 mb-2 rounded shadow"
+          className="bg-blue-100 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-500 text-blue-800 dark:text-blue-400 px-4 py-2 mb-2 rounded shadow transition-colors"
         >
           {note}
         </div>

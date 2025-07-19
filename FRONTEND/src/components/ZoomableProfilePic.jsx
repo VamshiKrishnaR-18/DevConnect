@@ -37,7 +37,7 @@ function ZoomableProfilePic({
       {/* Profile Picture */}
       <div className="relative group">
         <div
-          className={`${sizeClasses[size]} rounded-full overflow-hidden border-4 border-white shadow-lg cursor-pointer transition-transform duration-300 hover:scale-105`}
+          className={`${sizeClasses[size]} rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg cursor-pointer transition-transform duration-300 hover:scale-105`}
           onClick={handleImageClick}
         >
           <img
@@ -54,7 +54,7 @@ function ZoomableProfilePic({
         {isOwnProfile && (
           <button
             onClick={handleEditClick}
-            className="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-lg transition-all duration-300 transform hover:scale-110"
+            className="absolute bottom-0 right-0 bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full p-2 shadow-lg transition-all duration-300 transform hover:scale-110"
             title="Change profile picture"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,7 +81,7 @@ function ZoomableProfilePic({
           {isOwnProfile && (
             <button
               onClick={handleEditClick}
-              className="absolute top-4 left-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors z-10"
+              className="absolute top-4 left-4 bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors z-10"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />

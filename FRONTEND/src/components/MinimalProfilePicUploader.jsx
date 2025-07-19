@@ -95,13 +95,13 @@ function MinimalProfilePicUploader({ onUpload }) {
           disabled={uploading}
           className={`inline-flex items-center space-x-2 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-300 ${
             uploading
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-              : "bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 border border-gray-300 hover:border-blue-400 shadow-sm hover:shadow"
+              ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+              : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm hover:shadow"
           }`}
         >
           {uploading ? (
             <>
-              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-4 h-4 border-2 border-gray-400 dark:border-gray-500 border-t-transparent rounded-full animate-spin"></div>
               <span>Uploading...</span>
             </>
           ) : (
@@ -119,7 +119,7 @@ function MinimalProfilePicUploader({ onUpload }) {
       {/* Error Message */}
       {error && (
         <div className="text-center max-w-xs">
-          <p className="text-red-500 text-xs leading-tight">{error}</p>
+          <p className="text-red-500 dark:text-red-400 text-xs leading-tight">{error}</p>
         </div>
       )}
     </div>

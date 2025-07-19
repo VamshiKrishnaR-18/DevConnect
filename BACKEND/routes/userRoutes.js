@@ -32,7 +32,7 @@ const localStorage = multer.diskStorage({
 const isCloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME &&
   process.env.CLOUDINARY_API_KEY &&
   process.env.CLOUDINARY_API_SECRET &&
-  process.env.CLOUDINARY_CLOUD_NAME !== 'your_actual_cloud_name_here' &&
+  process.env.CLOUDINARY_CLOUD_NAME !== 'devconnect' &&
   process.env.CLOUDINARY_CLOUD_NAME !== 'devconnect' &&
   process.env.CLOUDINARY_API_KEY !== 'devconnect';
 
