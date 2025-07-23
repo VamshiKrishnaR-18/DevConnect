@@ -1,0 +1,1 @@
+"use client" import * as CollapsiblePrimitive from "@radix-ui/react-collapsible@1.1.3" function Collapsible({\n ...props\n}) {\n \n return ;\n} function CollapsibleTrigger({\n ...props\n}) {\n \n return ( );\n} function CollapsibleContent({\n ...props\n}) {\n \n return ( );\n} export {\n Collapsible, CollapsibleTrigger, CollapsibleContent\n}; 

@@ -1,33 +1,31 @@
-// Environment detection
-const isProduction = import.meta.env.PROD ||
-                    import.meta.env.VITE_NODE_ENV === 'production' ||
-                    window.location.hostname !== 'localhost';
+// Environment detection - be very explicit about development
+const isProduction = import.meta.env.VITE_NODE_ENV === 'production';
+const isDevelopment = import.meta.env.VITE_NODE_ENV === 'development' ||
+                     import.meta.env.DEV ||
+                     !import.meta.env.PROD;
 
-const isDevelopment = !isProduction;
-
-// Debug logging (only in development)
-if (isDevelopment) {
-  console.log('🔧 DevConnect Environment Debug:', {
-    'import.meta.env.PROD': import.meta.env.PROD,
-    'VITE_NODE_ENV': import.meta.env.VITE_NODE_ENV,
-    'hostname': window.location.hostname,
-    'isProduction': isProduction,
-    'API_BASE_URL': isProduction
-      ? (import.meta.env.VITE_API_BASE_URL || 'https://devconnect-f4au.onrender.com')
-      : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000')
-  });
-}
+// Debug logging (always show in console for debugging)
+console.log('🔧 DevConnect Environment Debug:', {
+  'import.meta.env.PROD': import.meta.env.PROD,
+  'import.meta.env.DEV': import.meta.env.DEV,
+  'VITE_NODE_ENV': import.meta.env.VITE_NODE_ENV,
+  'VITE_API_BASE_URL': import.meta.env.VITE_API_BASE_URL,
+  'VITE_SOCKET_URL': import.meta.env.VITE_SOCKET_URL,
+  'hostname': window.location.hostname,
+  'isProduction': isProduction,
+  'isDevelopment': isDevelopment
+});
 
 // Environment configuration
 const config = {
-  // API Configuration - automatically switches based on environment
-  API_BASE_URL: isProduction
-    ? (import.meta.env.VITE_API_BASE_URL || 'https://devconnect-f4au.onrender.com')
-    : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'),
+  // API Configuration - force localhost for development
+  API_BASE_URL: isDevelopment
+    ? 'http://localhost:3000'
+    : (import.meta.env.VITE_API_BASE_URL || 'https://devconnect-f4au.onrender.com'),
 
-  SOCKET_URL: isProduction
-    ? (import.meta.env.VITE_SOCKET_URL || 'https://devconnect-f4au.onrender.com')
-    : (import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'),
+  SOCKET_URL: isDevelopment
+    ? 'http://localhost:3000'
+    : (import.meta.env.VITE_SOCKET_URL || 'https://devconnect-f4au.onrender.com'),
 
   NODE_ENV: isProduction ? 'production' : 'development',
 
@@ -41,6 +39,7 @@ const config = {
       login: '/api/auth/login',
       register: '/api/auth/register',
       logout: '/api/auth/logout',
+      adminLogin: '/api/auth/admin/login',
     },
     posts: {
       base: '/api/posts',
@@ -72,6 +71,13 @@ const config = {
     timeout: 30000,
   }
 };
+
+// Log the final configuration being used
+console.log('🚀 DevConnect Final Config:', {
+  'API_BASE_URL': config.API_BASE_URL,
+  'SOCKET_URL': config.SOCKET_URL,
+  'NODE_ENV': config.NODE_ENV
+});
 
 // Helper function to get full API URL
 export const getApiUrl = (endpoint) => {

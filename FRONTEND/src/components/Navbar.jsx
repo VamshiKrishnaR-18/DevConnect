@@ -62,7 +62,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link
-              to={user ? "/feed" : "/"}
+              to={user ? (user.role === "admin" ? "/admin" : "/feed") : "/"}
               className="group flex items-center space-x-3 navbar-transition"
             >
               <div className="relative">
@@ -90,16 +90,18 @@ export default function Navbar() {
               <>
                 {/* Navigation Links */}
                 <div className="flex items-center space-x-1">
-                  <Link
-                    to="/feed"
-                    className="group relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-gray-800/80 transition-all duration-200"
-                  >
-                    <svg className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                    </svg>
-                    <span>Feed</span>
-                    <div className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></div>
-                  </Link>
+                  {user.role !== "admin" && (
+                    <Link
+                      to="/feed"
+                      className="group relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-gray-800/80 transition-all duration-200"
+                    >
+                      <svg className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                      </svg>
+                      <span>Feed</span>
+                      <div className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-200"></div>
+                    </Link>
+                  )}
                 </div>
 
                 {/* Dark Mode Toggle */}
@@ -158,19 +160,21 @@ export default function Navbar() {
                     <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 animate-slideDown">
                       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{user.username}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Signed in as developer</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Signed in as {user.role || 'developer'}</p>
                       </div>
 
-                      <Link
-                        to={`/profile/${user.username}`}
-                        onClick={() => setShowUserMenu(false)}
-                        className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        <span>Your Profile</span>
-                      </Link>
+                      {user.role !== "admin" && (
+                        <Link
+                          to={`/profile/${user.username}`}
+                          onClick={() => setShowUserMenu(false)}
+                          className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span>Your Profile</span>
+                        </Link>
+                      )}
 
                       <button
                         onClick={handleLogout}
@@ -287,27 +291,31 @@ export default function Navbar() {
                 </div>
 
                 {/* Mobile Navigation Links */}
-                <Link
-                  to="/feed"
-                  onClick={closeMobileMenu}
-                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-800 transition-all duration-200"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                  </svg>
-                  <span>Feed</span>
-                </Link>
+                {user.role !== "admin" && (
+                  <Link
+                    to="/feed"
+                    onClick={closeMobileMenu}
+                    className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-800 transition-all duration-200"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                    </svg>
+                    <span>Feed</span>
+                  </Link>
+                )}
 
-                <Link
-                  to={`/profile/${user.username}`}
-                  onClick={closeMobileMenu}
-                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-800 transition-all duration-200"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span>My Profile</span>
-                </Link>
+                {user.role !== "admin" && (
+                  <Link
+                    to={`/profile/${user.username}`}
+                    onClick={closeMobileMenu}
+                    className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-800 transition-all duration-200"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span>My Profile</span>
+                  </Link>
+                )}
 
                 {/* Mobile Dark Mode Toggle */}
                 <button

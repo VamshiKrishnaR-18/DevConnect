@@ -26,6 +26,22 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  // Admin-specific login method
+  const adminLogin = (adminData, token) => {
+    try {
+      // Ensure the user data includes role information
+      const adminUser = {
+        ...adminData,
+        role: adminData.role || "admin" // Ensure role is set
+      };
+      setUser(adminUser);
+      localStorage.setItem("user", JSON.stringify(adminUser));
+      localStorage.setItem("token", token);
+    } catch (error) {
+      console.error("Error storing admin data:", error);
+    }
+  };
+
   const logout = () => {
     try {
       setUser(null);
@@ -49,6 +65,11 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  // Helper function to check if user is admin
+  const isAdmin = () => {
+    return user && user.role === "admin";
+  };
+
   useEffect(() => {
     if (user && !isTokenValid()) {
       logout();
@@ -56,7 +77,14 @@ const AuthProvider = ({ children }) => {
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{
+      user,
+      login,
+      adminLogin,
+      logout,
+      loading,
+      isAdmin
+    }}>
       {children}
     </AuthContext.Provider>
   );

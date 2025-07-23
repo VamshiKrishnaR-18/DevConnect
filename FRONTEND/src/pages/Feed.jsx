@@ -9,18 +9,38 @@ import LikeButton from "../components/LikeButton";
 import ZoomableProfilePic from "../components/ZoomableProfilePic";
 import NotificationBar from "../components/notificationBar";
 import { postsAPI } from "../utils/api";
-
-
+import MediaUploader from "../components/MediaUploader";
+import config from "../config/environment.js";
 
 function Feed() {
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState("");
+  const [selectedMedia, setSelectedMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState("");
   const [notifications, setNotifications] = useState([]);
   const { user } = useContext(AuthContext);
   const socket = useSocket();
+
+  // Helper function to convert file system paths to proper URLs
+  const getMediaUrl = (mediaUrl) => {
+    if (!mediaUrl) return '';
+
+    // If it's already a proper URL (starts with http or /), return as is
+    if (mediaUrl.startsWith('http') || mediaUrl.startsWith('/uploads/')) {
+      return mediaUrl.startsWith('/') ? `${config.API_BASE_URL}${mediaUrl}` : mediaUrl;
+    }
+
+    // If it's a local file system path, extract the filename and create proper URL
+    if (mediaUrl.includes('\\uploads\\') || mediaUrl.includes('/uploads/')) {
+      const filename = mediaUrl.split(/[\\\/]/).pop();
+      return `${config.API_BASE_URL}/uploads/${filename}`;
+    }
+
+    // Fallback: assume it's just a filename
+    return `${config.API_BASE_URL}/uploads/${mediaUrl}`;
+  };
 
   useEffect(() => {
     // Only set up socket listeners if socket is available
@@ -57,7 +77,9 @@ function Feed() {
 
       // Remove notification after 3 seconds
       setTimeout(() => {
-        setNotifications((prev) => prev.filter((n) => n !== notificationMessage));
+        setNotifications((prev) =>
+          prev.filter((n) => n !== notificationMessage)
+        );
       }, 3000);
     };
 
@@ -100,8 +122,8 @@ function Feed() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!newPost.trim()) {
-      setError("Please enter some content for your post.");
+    if (!newPost.trim() && selectedMedia.length === 0) {
+      setError("Please enter some content or select media for your post.");
       return;
     }
 
@@ -109,10 +131,38 @@ function Feed() {
     setError("");
 
     try {
-      const response = await postsAPI.createPost({ content: newPost });
+      let response;
+      
+      if (selectedMedia.length > 0) {
+        // Create FormData for media upload
+        const formData = new FormData();
+        formData.append('content', newPost);
+        
+        selectedMedia.forEach((file) => {
+          formData.append('media', file);
+        });
 
-      setPosts([response.data.post, ...posts]);
+        response = await fetch(`${postsAPI.baseURL}/api/posts/with-media`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create post with media');
+        }
+
+        response = await response.json();
+      } else {
+        // Regular text post
+        response = await postsAPI.createPost({ content: newPost });
+      }
+
+      setPosts([response.post, ...posts]);
       setNewPost("");
+      setSelectedMedia([]);
     } catch (error) {
       console.error("Error creating post:", error);
       setError("Failed to create post. Please try again.");
@@ -142,13 +192,25 @@ function Feed() {
             rows={3}
             disabled={posting}
           />
-          <button
-            type="submit"
-            className="mt-2 bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-blue-400 dark:disabled:bg-blue-500 disabled:cursor-not-allowed transition-colors"
-            disabled={posting || !newPost.trim()}
-          >
-            {posting ? "Posting..." : "Post"}
-          </button>
+          
+          {/* Media Uploader */}
+          <div className="mt-3">
+            <MediaUploader onMediaSelect={setSelectedMedia} />
+          </div>
+          
+          <div className="flex justify-between items-center mt-3">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {selectedMedia.length > 0 && `${selectedMedia.length} file(s) selected`}
+            </span>
+            
+            <button
+              type="submit"
+              className="bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-blue-400 dark:disabled:bg-blue-500 disabled:cursor-not-allowed transition-colors"
+              disabled={posting || (!newPost.trim() && selectedMedia.length === 0)}
+            >
+              {posting ? "Posting..." : "Post"}
+            </button>
+          </div>
         </form>
 
         {/* Feed */}
@@ -169,7 +231,7 @@ function Feed() {
                 key={post._id}
                 className="p-4 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm transition-colors"
               >
-                {/* Post Header with Profile Picture */}
+                {/* Post Header */}
                 <div className="flex items-center mb-3">
                   <div className="mr-3">
                     <ZoomableProfilePic
@@ -206,9 +268,39 @@ function Feed() {
                 </div>
 
                 {/* Post Content */}
-                <p className="text-gray-800 dark:text-gray-200 mb-2">{post.content}</p>
+                <p className="text-gray-800 dark:text-gray-200 mb-3">
+                  {post.content}
+                </p>
 
-                {/* 🔽 Comment Section for each post */}
+                {/* Media Display */}
+                {post.media && post.media.length > 0 && (
+                  <div className={`grid gap-2 mb-3 ${
+                    post.media.length === 1 ? 'grid-cols-1' : 
+                    post.media.length === 2 ? 'grid-cols-2' : 
+                    'grid-cols-2 md:grid-cols-3'
+                  }`}>
+                    {post.media.map((media, index) => (
+                      <div key={index} className="relative">
+                        {media.type === 'image' ? (
+                          <img
+                            src={getMediaUrl(media.url)}
+                            alt="Post media"
+                            className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => window.open(getMediaUrl(media.url), '_blank')}
+                          />
+                        ) : (
+                          <video
+                            src={getMediaUrl(media.url)}
+                            controls
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Comment Section */}
                 <CommentSection postId={post._id} />
               </div>
             ))

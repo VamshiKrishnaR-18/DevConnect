@@ -7,6 +7,7 @@ import ZoomableProfilePic from "../components/ZoomableProfilePic";
 import { getProfileImageSrc } from "../utils/imageUtils";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import config from "../config/environment";
 
 function Profile() {
   const { username } = useParams();
@@ -18,16 +19,34 @@ function Profile() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
+  // Debug logging
+  console.log("🔍 Profile Debug Info:", {
+    username,
+    currentURL: window.location.href,
+    pathname: window.location.pathname,
+    params: useParams()
+  });
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        console.log("🔍 Fetching profile for username:", username);
+        console.log("🌐 API URL:", `${config.API_BASE_URL}/api/users/profile/${username}`);
+
         setLoading(true);
         setError(null);
-        const response = await axios.get(`https://devconnect-f4au.onrender.com/api/users/profile/${username}`);
+        const response = await axios.get(`${config.API_BASE_URL}/api/users/profile/${username}`);
+        console.log("✅ Profile response:", response.data);
         setProfile(response.data);
       } catch (err) {
-        console.error("Error fetching profile:", err);
-        setError("Failed to load profile. Please try again later.");
+        console.error("❌ Error fetching profile:", err);
+        console.error("❌ Error response:", err.response?.data);
+
+        if (err.response?.status === 404) {
+          setError(`User "${username}" not found. This user may not exist or may have been deleted.`);
+        } else {
+          setError("Failed to load profile. Please try again later.");
+        }
       } finally {
         setLoading(false);
       }
@@ -35,6 +54,10 @@ function Profile() {
 
     if (username) {
       fetchProfile();
+    } else {
+      console.error("❌ No username provided in URL params");
+      setError("No username provided in the URL");
+      setLoading(false);
     }
   }, [username]);
 
@@ -99,11 +122,10 @@ function Profile() {
     setFollowLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const BASE_URL = "https://devconnect-f4au.onrender.com";
 
-const endpoint = isFollowing
-  ? `${BASE_URL}/api/users/unfollow/${profile.user._id}`
-  : `${BASE_URL}/api/users/follow/${profile.user._id}`;
+      const endpoint = isFollowing
+        ? `${config.API_BASE_URL}/api/users/unfollow/${profile.user._id}`
+        : `${config.API_BASE_URL}/api/users/follow/${profile.user._id}`;
 
 
       await axios.put(endpoint, {}, {

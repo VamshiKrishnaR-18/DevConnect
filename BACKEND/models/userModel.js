@@ -58,6 +58,11 @@ const userSchema = mongoose.Schema(
         },
       },
     ],
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
   },
   {
     timestamps: true,
@@ -66,16 +71,6 @@ const userSchema = mongoose.Schema(
   }
 );
 
-// // Virtual for follower count
-// userSchema.virtual("followerCount").get(function() {
-//   return this.followers.length || 0;
-// });
 
-// // Virtual for following count
-// userSchema.virtual("followingCount").get(function() {
-//   return this.following.length;
-// });
-
-// Indexes are automatically created by unique: true in schema fields
 
 export default mongoose.model("User", userSchema);

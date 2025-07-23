@@ -2,8 +2,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Feed from "./pages/Feed";
-import ProtectedRoute from "./components/protectedRoute";
+import ProtectedRoute, { AdminProtectedRoute } from "./components/protectedRoute";
 import Profile from "./pages/UserProfile.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import AdminLogin from "./pages/AdminLogin.jsx";
+import NotFound from "./pages/NotFound.jsx";
 import { SocketProvider } from "./contexts/SocketContext.jsx";
 import { DarkModeProvider } from "./contexts/DarkModeContext.jsx";
 
@@ -15,6 +18,7 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Login />} />
+              <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route
                 path="/feed"
@@ -26,12 +30,22 @@ function App() {
               />
               <Route
                 path="/profile/:username"
+                element={<Profile />}
+              />
+              <Route
+                path="/admin/login"
+                element={<AdminLogin />}
+              />
+              <Route
+                path="/admin"
                 element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
+                  <AdminProtectedRoute>
+                    <AdminDashboard />
+                  </AdminProtectedRoute>
                 }
               />
+              {/* 404 Route - Must be last */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </div>

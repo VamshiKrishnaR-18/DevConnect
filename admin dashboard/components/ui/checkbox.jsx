@@ -1,0 +1,1 @@
+"use client" import * as React from "react" import * as CheckboxPrimitive from "@radix-ui/react-checkbox@1.1.4" import {\n CheckIcon\n} from "lucide-react@0.487.0" import {\n cn\n} from "./utils" function Checkbox({\n className, ...props\n}) {\n \n return ( );\n} export {\n Checkbox\n}; 

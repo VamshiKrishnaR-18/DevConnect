@@ -5,8 +5,9 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import likeRoutes from "./routes/likeRoutes.js"
 import commentRoutes from "./routes/commentRoutes.js";
+import likeRoutes from "./routes/likeRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import {Server} from "socket.io";
 import http from "http";
 
@@ -20,6 +21,8 @@ const server = http.createServer(app);
 // CORS origins configuration
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
   "http://localhost:3000",
   "https://dev-connect-beryl.vercel.app",
   process.env.FRONTEND_URL
@@ -103,6 +106,8 @@ try {
   app.use("/api/likes", likeRoutes);
   console.log("✅ Like routes loaded");
 
+  app.use("/admin", adminRoutes);
+  console.log("✅ Admin routes loaded");
 } catch (error) {
   console.error("❌ Error loading routes:", error);
 }

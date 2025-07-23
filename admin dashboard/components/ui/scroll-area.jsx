@@ -1,0 +1,1 @@
+"use client" import * as React from "react" import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area@1.2.3" import {\n cn\n} from "./utils" function ScrollArea({\n className, children, ...props\n}) {\n \n return ( {children} );\n} function ScrollBar({\n className, orientation = "vertical", ...props\n}) {\n \n return ( );\n} export {\n ScrollArea, ScrollBar\n}; 

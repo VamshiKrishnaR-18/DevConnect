@@ -1,0 +1,1 @@
+"use client" import * as React from "react" import * as SeparatorPrimitive from "@radix-ui/react-separator@1.1.2" import {\n cn\n} from "./utils" function Separator({\n className, orientation = "horizontal", decorative = true, ...props\n}) {\n \n return ( );\n} export {\n Separator\n}; 
