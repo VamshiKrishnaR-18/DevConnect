@@ -1,8 +1,7 @@
 // Environment detection - be very explicit about development
-const isProduction = import.meta.env.VITE_NODE_ENV === 'production';
-const isDevelopment = import.meta.env.VITE_NODE_ENV === 'development' ||
-                     import.meta.env.DEV ||
-                     !import.meta.env.PROD;
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const isProduction = import.meta.env.VITE_NODE_ENV === 'production' && !isLocalhost;
+const isDevelopment = !isProduction;
 
 // Debug logging (always show in console for debugging)
 console.log('🔧 DevConnect Environment Debug:', {
@@ -12,18 +11,19 @@ console.log('🔧 DevConnect Environment Debug:', {
   'VITE_API_BASE_URL': import.meta.env.VITE_API_BASE_URL,
   'VITE_SOCKET_URL': import.meta.env.VITE_SOCKET_URL,
   'hostname': window.location.hostname,
+  'isLocalhost': isLocalhost,
   'isProduction': isProduction,
   'isDevelopment': isDevelopment
 });
 
 // Environment configuration
 const config = {
-  // API Configuration - force localhost for development
-  API_BASE_URL: isDevelopment
+  // API Configuration - force localhost when running on localhost
+  API_BASE_URL: isLocalhost
     ? 'http://localhost:3000'
     : (import.meta.env.VITE_API_BASE_URL || 'https://devconnect-f4au.onrender.com'),
 
-  SOCKET_URL: isDevelopment
+  SOCKET_URL: isLocalhost
     ? 'http://localhost:3000'
     : (import.meta.env.VITE_SOCKET_URL || 'https://devconnect-f4au.onrender.com'),
 

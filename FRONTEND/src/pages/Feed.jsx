@@ -27,9 +27,14 @@ function Feed() {
   const getMediaUrl = (mediaUrl) => {
     if (!mediaUrl) return '';
 
-    // If it's already a proper URL (starts with http or /), return as is
-    if (mediaUrl.startsWith('http') || mediaUrl.startsWith('/uploads/')) {
-      return mediaUrl.startsWith('/') ? `${config.API_BASE_URL}${mediaUrl}` : mediaUrl;
+    // If it's already a proper URL (starts with http), return as is
+    if (mediaUrl.startsWith('http')) {
+      return mediaUrl;
+    }
+
+    // If it's a relative URL starting with /uploads/, prepend the API base URL
+    if (mediaUrl.startsWith('/uploads/')) {
+      return `${config.API_BASE_URL}${mediaUrl}`;
     }
 
     // If it's a local file system path, extract the filename and create proper URL
