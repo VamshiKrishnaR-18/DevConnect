@@ -26,7 +26,9 @@ export const createPost = async (req, res) => {
     await newPost.populate("user", "username profilepic");
 
     const io = req.app.get("io");
-    io.emit("newPost", savedPost);
+    if (io) {
+      io.emit("newPost", savedPost);
+    }
 
     res.status(201).json({
       message: "Post created successfully",
@@ -47,61 +49,47 @@ export const createPost = async (req, res) => {
 
 export const createPostWithMedia = async (req, res) => {
   try {
-    console.log("=== CREATE POST WITH MEDIA DEBUG ===");
-    console.log("req.body:", req.body);
-    console.log("req.files:", req.files);
-    console.log("req.user:", req.user);
-
     const { content } = req.body;
 
-    if (!content || !content.trim()) {
-      return res.status(400).json({ message: "Post content is required" });
+    // ----------------------------------------------------------------------
+    // ✅ FIX: Allow empty content IF there is media attached
+    // ----------------------------------------------------------------------
+    const hasMedia = req.files && req.files.length > 0;
+    const hasContent = content && content.trim().length > 0;
+
+    if (!hasMedia && !hasContent) {
+      return res.status(400).json({ message: "Post must contain either text or media" });
     }
 
-    if (content.length > 1000) {
+    if (hasContent && content.length > 1000) {
       return res.status(400).json({ message: "Post content cannot exceed 1000 characters" });
-    }
-
-    // Check if user exists
-    if (!req.user || !req.user._id) {
-      console.error("User not found in request");
-      return res.status(401).json({ message: "User authentication failed" });
     }
 
     // Process uploaded media
     const media = [];
     if (req.files && req.files.length > 0) {
-      console.log("Processing files:", req.files.length);
       for (const file of req.files) {
-        console.log("File:", file);
-
-        // Handle both Cloudinary and local storage
         const mediaItem = {
           type: file.mimetype.startsWith('image/') ? 'image' : 'video',
           filename: file.originalname,
         };
 
         if (file.path && file.path.startsWith('http')) {
-          // Cloudinary storage (URLs start with http)
+          // Cloudinary URL
           mediaItem.url = file.path;
           mediaItem.publicId = file.filename;
         } else if (file.filename) {
-          // Local storage (file.path is local file system path)
+          // Local storage URL
           mediaItem.url = `/uploads/${file.filename}`;
           mediaItem.publicId = file.filename;
-        } else {
-          console.error("File missing path and filename:", file);
-          continue;
         }
 
         media.push(mediaItem);
       }
     }
 
-    console.log("Creating post with media:", media);
-
     const newPost = new postModel({
-      content: content.trim(),
+      content: content ? content.trim() : "", // Allow empty string if media exists
       user: req.user._id,
       media: media,
     });
@@ -121,7 +109,6 @@ export const createPostWithMedia = async (req, res) => {
 
   } catch (error) {
     console.error("Create post with media error:", error);
-    console.error("Error stack:", error.stack);
     res.status(500).json({
       message: "Internal Server Error",
       error: error.message
@@ -201,8 +188,9 @@ export const deletePost = async (req, res) => {
     await postModel.findByIdAndDelete(id);
 
     const io = req.app.get("io");
-
-    io.emit("postDeleted", id);
+    if (io) {
+      io.emit("postDeleted", id);
+    }
 
     res.status(200).json({ message: "Post deleted successfully" });
   } catch (err) {
@@ -233,11 +221,12 @@ export const toggleLike = async (req, res) => {
     await post.save();
 
     const io = req.app.get("io");
-
-    io.emit("postLiked", {
-      postId: post._id,
-      likes: post.likes,
-    });
+    if (io) {
+      io.emit("postLiked", {
+        postId: post._id,
+        likes: post.likes,
+      });
+    }
 
     return res.status(200).json({
       message: liked ? "post unliked" : "post liked",
@@ -245,6 +234,6 @@ export const toggleLike = async (req, res) => {
     });
   } catch (err) {
     console.error("Toggle like error:", err);
-    res.status(500).json({ message: "Failed to  like" });
+    res.status(500).json({ message: "Failed to like" });
   }
 };

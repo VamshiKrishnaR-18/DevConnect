@@ -2,11 +2,13 @@ import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
 
 // ----------------------------------------------------------------------
-// 🚨 CRITICAL FIX: "multer-storage-cloudinary" is a CommonJS module.
-// We must import the default 'pkg' and destructure it manually.
+// ⚡ ROOT CAUSE FIX:
+// We use 'createRequire' to force Node.js to load the CommonJS library
+// correctly, bypassing the ESM import system that is causing the crash.
 // ----------------------------------------------------------------------
-import pkg from "multer-storage-cloudinary";
-const { CloudinaryStorage } = pkg;
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 dotenv.config();
 
@@ -26,7 +28,7 @@ export const storage = new CloudinaryStorage({
   },
 });
 
-// Storage for Post Media (Images/Videos)
+// Storage for Post Media
 export const postMediaStorage = new CloudinaryStorage({
   cloudinary,
   params: {

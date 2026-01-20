@@ -3,9 +3,8 @@ import mongoose from "mongoose";
 const postSchema = mongoose.Schema({
   content: {
     type: String,
-    required: [true, "Post content is required"],
     trim: true,
-    minlength: [1, "Post content cannot be empty"],
+    // validation removed: content is no longer mandatory (handled by controller)
     maxlength: [1000, "Post content cannot exceed 1000 characters"],
   },
   user: {
@@ -32,6 +31,10 @@ const postSchema = mongoose.Schema({
   likes: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
+  }],
+  comments: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Comment",
   }],
 }, {
   timestamps: true,
