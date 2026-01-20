@@ -1,1 +1,19 @@
-node_modules
+# Environment variables
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Node dependencies
+node_modules/
+**/node_modules/
+
+# Uploads / backups
+uploads/
+backups/
+
+# Media files
+*.jpg
+*.jpeg
+*.png
+*.mp4
