@@ -1,19 +1,24 @@
-# Environment variables
-.env
-.env.*
-**/.env
-**/.env.*
-
-# Node dependencies
+# Dependencies
 node_modules/
-**/node_modules/
+package-lock.json
 
-# Uploads / backups
-uploads/
-backups/
+# Environment Variables
+.env
+.env.local
+.env.*
 
-# Media files
-*.jpg
-*.jpeg
-*.png
-*.mp4
+# Build Outputs
+dist/
+build/
+out/
+
+# User Uploads (Keep the folder, ignore the content)
+BACKEND/uploads/*
+!BACKEND/uploads/.gitkeep
+FRONTEND/public/temp/
+
+# Logs and System Files
+*.log
+.DS_Store
+Thumbs.db
+coverage/
