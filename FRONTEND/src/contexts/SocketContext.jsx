@@ -1,17 +1,14 @@
-import { createContext, useEffect, useContext, useState } from "react";
+import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import config, { getSocketUrl } from "../config/environment.js";
-
-const socketContext = createContext();
+import config from "../config/environment.js";
+import { SocketContext } from "./SocketContextStore";
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    // Initialize socket connection
-    const socketInstance = io(getSocketUrl(), config.socketConfig);
+    const socketInstance = io(config.SOCKET_URL, config.socketConfig);
 
-    // Connection event handlers
     socketInstance.on("connect", () => {
       console.log("Socket connected:", socketInstance.id);
     });
@@ -24,26 +21,16 @@ export const SocketProvider = ({ children }) => {
       console.error("Socket connection error:", error);
     });
 
-    // Set the socket in state so components can access it
     setSocket(socketInstance);
 
-    // Cleanup on unmount
     return () => {
-      if (socketInstance) {
-        socketInstance.disconnect();
-      }
+      socketInstance.disconnect();
     };
   }, []);
 
   return (
-    <socketContext.Provider value={socket}>{children}</socketContext.Provider>
+    <SocketContext.Provider value={socket}>
+      {children}
+    </SocketContext.Provider>
   );
-};
-
-export const useSocket = () => {
-  const socket = useContext(socketContext);
-  if (socket === undefined) {
-    throw new Error("useSocket must be used within a SocketProvider");
-  }
-  return socket; // This can be null initially, which is fine
 };

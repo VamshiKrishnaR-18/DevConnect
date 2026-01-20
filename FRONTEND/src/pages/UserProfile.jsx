@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext";
-import { useSocket } from "../contexts/SocketContext";
+import { useSocket } from "../contexts/SocketContextStore";
 import ZoomableProfilePic from "../components/ZoomableProfilePic";
 import { getProfileImageSrc } from "../utils/imageUtils";
 import Navbar from "../components/Navbar";

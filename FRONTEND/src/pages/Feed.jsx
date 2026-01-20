@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
-import { useSocket } from "../contexts/SocketContext";
+import { useSocket } from "../contexts/SocketContextStore";
 import { AuthContext } from "../contexts/AuthContext";
 
 import Navbar from "../components/Navbar";
@@ -26,33 +26,31 @@ function Feed() {
   const { user } = useContext(AuthContext);
   const socket = useSocket();
 
-  /* --------------------------------
+  /* -----------------------------
      Media URL helper
-  -------------------------------- */
+  ----------------------------- */
   const getMediaUrl = (mediaUrl) => {
     if (!mediaUrl) return "";
-
     if (mediaUrl.startsWith("http")) return mediaUrl;
-
-    if (mediaUrl.startsWith("/uploads/")) {
-      return `${config.API_BASE_URL}${mediaUrl}`;
-    }
-
-    const filename = mediaUrl.split(/[\\/]/).pop();
-    return `${config.API_BASE_URL}/uploads/${filename}`;
+    return `${config.API_BASE_URL}${mediaUrl.startsWith("/") ? "" : "/"}${mediaUrl}`;
   };
 
-  /* --------------------------------
-     Fetch posts
-  -------------------------------- */
+  /* -----------------------------
+     Fetch posts (DEDUPED)
+  ----------------------------- */
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/posts");
-      setPosts(res.data.posts || []);
+      const res = await api.get("/api/posts");
+
+      const uniquePosts = Array.from(
+        new Map((res.data.posts || []).map((p) => [p._id, p])).values()
+      );
+
+      setPosts(uniquePosts);
     } catch (err) {
       console.error("Error fetching posts:", err);
-      setError("Failed to load posts. Please try again later.");
+      setError("Failed to load posts.");
     } finally {
       setLoading(false);
     }
@@ -62,14 +60,17 @@ function Feed() {
     fetchPosts();
   }, []);
 
-  /* --------------------------------
-     Socket listeners
-  -------------------------------- */
+  /* -----------------------------
+     Socket listeners (DEDUPED)
+  ----------------------------- */
   useEffect(() => {
     if (!socket) return;
 
     const handleNewPost = (post) => {
-      setPosts((prev) => [post, ...prev]);
+      setPosts((prev) => {
+        if (prev.some((p) => p._id === post._id)) return prev;
+        return [post, ...prev];
+      });
     };
 
     const handlePostDeleted = (postId) => {
@@ -91,7 +92,7 @@ function Feed() {
         )
       );
 
-      const msg = `💬 New comment by ${comment.username}`;
+      const msg = `New comment by ${comment.username}`;
       setNotifications((prev) => [...prev, msg]);
 
       setTimeout(() => {
@@ -112,9 +113,9 @@ function Feed() {
     };
   }, [socket]);
 
-  /* --------------------------------
+  /* -----------------------------
      Create post
-  -------------------------------- */
+  ----------------------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -132,32 +133,33 @@ function Feed() {
       if (selectedMedia.length > 0) {
         const formData = new FormData();
         formData.append("content", newPost);
+        selectedMedia.forEach((file) => formData.append("media", file));
 
-        selectedMedia.forEach((file) => {
-          formData.append("media", file);
-        });
-
-        res = await api.post("/posts/with-media", formData, {
+        res = await api.post("/api/posts/with-media", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
-        res = await api.post("/posts", { content: newPost });
+        res = await api.post("/api/posts", { content: newPost });
       }
 
-      setPosts((prev) => [res.data.post, ...prev]);
+      setPosts((prev) => {
+        if (prev.some((p) => p._id === res.data.post._id)) return prev;
+        return [res.data.post, ...prev];
+      });
+
       setNewPost("");
       setSelectedMedia([]);
     } catch (err) {
       console.error("Error creating post:", err);
-      setError("Failed to create post. Please try again.");
+      setError("Failed to create post.");
     } finally {
       setPosting(false);
     }
   };
 
-  /* --------------------------------
+  /* -----------------------------
      Render
-  -------------------------------- */
+  ----------------------------- */
   return (
     <>
       <Navbar />
@@ -205,9 +207,7 @@ function Feed() {
         {loading ? (
           <p className="text-center">Loading posts...</p>
         ) : posts.length === 0 ? (
-          <p className="text-center text-gray-500">
-            No posts yet. Be the first!
-          </p>
+          <p className="text-center text-gray-500">No posts yet.</p>
         ) : (
           <div className="space-y-6">
             {posts.map((post) => (
@@ -215,7 +215,6 @@ function Feed() {
                 key={post._id}
                 className="p-4 border rounded bg-white shadow-sm"
               >
-                {/* Header */}
                 <div className="flex items-center mb-3">
                   <ZoomableProfilePic
                     profilePic={post.user?.profilepic}
@@ -235,28 +234,24 @@ function Feed() {
                     </p>
                   </div>
 
-                  {user && (
-                    <LikeButton post={post} userId={user._id} />
-                  )}
+                  {user && <LikeButton post={post} userId={user._id} />}
                 </div>
 
-                {/* Content */}
                 <p className="mb-3">{post.content}</p>
 
-                {/* Media */}
                 {post.media?.length > 0 && (
                   <div className="grid grid-cols-2 gap-2 mb-3">
                     {post.media.map((m, i) =>
                       m.type === "image" ? (
                         <img
-                          key={i}
+                          key={`${post._id}-img-${i}`}
                           src={getMediaUrl(m.url)}
                           alt="media"
                           className="rounded object-cover h-40"
                         />
                       ) : (
                         <video
-                          key={i}
+                          key={`${post._id}-vid-${i}`}
                           src={getMediaUrl(m.url)}
                           controls
                           className="rounded h-40"

@@ -1,209 +1,108 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import userModel from "../models/userModel.js";
+import User from "../models/userModel.js";
 
-/**
- * Common cookie options for JWT
- */
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  secure: false, // set true in production (HTTPS)
+  sameSite: "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
-/**
- * @desc    Register new user
- * @route   POST /api/auth/register
- * @access  Public
- */
+// REGISTER
 export const registerUser = async (req, res) => {
-  try {
-    const { email, username, password } = req.body;
+  const { username, email, password } = req.body;
 
-    // Basic validation
-    if (!email || !username || !password) {
-      return res.status(400).json({ msg: "All fields are required" });
-    }
+  if (!username || !email || !password)
+    return res.status(400).json({ msg: "All fields required" });
 
-    if (password.length < 6) {
-      return res
-        .status(400)
-        .json({ msg: "Password must be at least 6 characters long" });
-    }
+  const exists = await User.findOne({ $or: [{ email }, { username }] });
+  if (exists)
+    return res.status(400).json({ msg: "User already exists" });
 
-    // Check if user already exists
-    const existingUser = await userModel.findOne({
-      $or: [{ email }, { username }],
-    });
+  const hashed = await bcrypt.hash(password, 10);
 
-    if (existingUser) {
-      if (existingUser.email === email) {
-        return res
-          .status(400)
-          .json({ msg: "User with this email already exists" });
-      }
-      if (existingUser.username === username) {
-        return res
-          .status(400)
-          .json({ msg: "Username is already taken" });
-      }
-    }
+  const user = await User.create({
+    username,
+    email,
+    password: hashed,
+  });
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Create user
-    const newUser = new userModel({
-      username: username.trim(),
-      email: email.toLowerCase().trim(),
-      password: hashedPassword,
-    });
-
-    await newUser.save();
-
-    res.status(201).json({
-      msg: "User created successfully",
-      user: {
-        _id: newUser._id,
-        username: newUser.username,
-        email: newUser.email,
-      },
-    });
-  } catch (err) {
-    console.error("Registration error:", err);
-
-    if (err.name === "ValidationError") {
-      const errors = Object.values(err.errors).map((e) => e.message);
-      return res.status(400).json({ msg: errors.join(", ") });
-    }
-
-    if (err.code === 11000) {
-      const field = Object.keys(err.keyValue)[0];
-      return res.status(400).json({ msg: `${field} already exists` });
-    }
-
-    res.status(500).json({ msg: "Server error during registration" });
-  }
+  res.status(201).json({ msg: "Registered successfully" });
 };
 
-/**
- * @desc    Login user
- * @route   POST /api/auth/login
- * @access  Public
- */
+// LOGIN (USER)
 export const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ msg: "Email and password are required" });
-    }
+  const user = await User.findOne({ email });
+  if (!user) return res.status(401).json({ msg: "Invalid credentials" });
 
-    const user = await userModel
-      .findOne({ email: email.toLowerCase().trim() })
-      .select("+password");
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) return res.status(401).json({ msg: "Invalid credentials" });
 
-    if (!user) {
-      return res.status(401).json({ msg: "Invalid credentials" });
-    }
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
 
-    const isMatch = await bcrypt.compare(password, user.password);
+  res.cookie("token", token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+});
 
-    if (!isMatch) {
-      return res.status(401).json({ msg: "Invalid credentials" });
-    }
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res
-      .cookie("token", token, cookieOptions)
-      .status(200)
-      .json({
-        msg: "Login successful",
-        user: {
-          _id: user._id,
-          username: user.username,
-          email: user.email,
-          bio: user.bio,
-          profilepic: user.profilepic,
-        },
-      });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ msg: "Server error during login" });
-  }
+  res.json({
+    user: {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      profilepic: user.profilepic,
+    },
+  });
 };
 
-/**
- * @desc    Login admin
- * @route   POST /api/auth/admin/login
- * @access  Public
- */
+// LOGIN (ADMIN)
 export const loginAdmin = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ msg: "Email and password are required" });
-    }
+  const admin = await User.findOne({ email, role: "admin" });
+  if (!admin) return res.status(401).json({ msg: "Invalid credentials" });
 
-    const user = await userModel
-      .findOne({
-        email: email.toLowerCase().trim(),
-        role: "admin",
-      })
-      .select("+password");
+  const match = await bcrypt.compare(password, admin.password);
+  if (!match) return res.status(401).json({ msg: "Invalid credentials" });
 
-    if (!user) {
-      return res.status(401).json({ msg: "Invalid credentials" });
-    }
+  const token = jwt.sign(
+    { id: admin._id, role: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 
-    const isMatch = await bcrypt.compare(password, user.password);
+  res.cookie("token", token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+});
 
-    if (!isMatch) {
-      return res.status(401).json({ msg: "Invalid credentials" });
-    }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res
-      .cookie("token", token, cookieOptions)
-      .status(200)
-      .json({
-        msg: "Admin login successful",
-        user: {
-          _id: user._id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        },
-      });
-  } catch (err) {
-    console.error("Admin login error:", err);
-    res.status(500).json({ msg: "Server error during admin login" });
-  }
+  res.json({
+    user: {
+      _id: admin._id,
+      username: admin.username,
+      email: admin.email,
+      role: admin.role,
+    },
+  });
 };
 
-/**
- * @desc    Logout user/admin
- * @route   POST /api/auth/logout
- * @access  Private
- */
+// LOGOUT
 export const logoutUser = (req, res) => {
-  res
-    .clearCookie("token", {
-      httpOnly: true,
-      sameSite: "strict",
-    })
-    .status(200)
-    .json({ msg: "Logged out successfully" });
+  res.clearCookie("token");
+  res.json({ msg: "Logged out" });
+};
+
+// GET CURRENT USER
+export const getMe = (req, res) => {
+  res.json({ user: req.user });
 };
