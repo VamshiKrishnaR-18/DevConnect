@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "DevConnect Monorepo Root",
   "scripts": {
-    "install-all": "npm install && cd BACKEND && npm install && cd ../FRONTEND && npm install",
-    "dev": "concurrently \"npm run server --prefix BACKEND\" \"npm run dev --prefix FRONTEND\"",
+    "install-all": "npm install && cd BACKEND && npm install --legacy-peer-deps && cd ../FRONTEND && npm install",
+   "dev": "concurrently \"npm run dev --prefix BACKEND\" \"npm run dev --prefix FRONTEND\"",
     "server": "npm run server --prefix BACKEND",
     "client": "npm run dev --prefix FRONTEND"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.0"
   },
   "keywords": [],
   "author": "",
