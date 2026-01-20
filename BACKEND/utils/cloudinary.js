@@ -1,5 +1,14 @@
 import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
+import dotenv from "dotenv";
+
+// ----------------------------------------------------------------------
+// 🚨 CRITICAL FIX: "multer-storage-cloudinary" is a CommonJS module.
+// We must import the default 'pkg' and destructure it manually.
+// ----------------------------------------------------------------------
+import pkg from "multer-storage-cloudinary";
+const { CloudinaryStorage } = pkg;
+
+dotenv.config();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -7,7 +16,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Existing profile pic storage
+// Storage for Profile Pictures
 export const storage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -17,7 +26,7 @@ export const storage = new CloudinaryStorage({
   },
 });
 
-// New post media storage
+// Storage for Post Media (Images/Videos)
 export const postMediaStorage = new CloudinaryStorage({
   cloudinary,
   params: {
