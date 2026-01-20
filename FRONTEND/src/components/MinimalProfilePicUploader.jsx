@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usersAPI } from "../utils/api";
+import api from "../utils/api";
 
 function MinimalProfilePicUploader({ onUpload }) {
   const [file, setFile] = useState(null);
@@ -8,8 +8,6 @@ function MinimalProfilePicUploader({ onUpload }) {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    
-    // Clear previous error
     setError(null);
 
     if (!selectedFile) {
@@ -17,24 +15,21 @@ function MinimalProfilePicUploader({ onUpload }) {
       return;
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
     if (!allowedTypes.includes(selectedFile.type)) {
-      setError('Please select a valid image file (JPEG, JPG, or PNG)');
+      setError("Please select a valid image file (JPEG, JPG, or PNG)");
       setFile(null);
       return;
     }
 
-    // Validate file size (5MB limit)
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    const maxSize = 5 * 1024 * 1024; // 5MB
     if (selectedFile.size > maxSize) {
-      setError('File size must be less than 5MB');
+      setError("File size must be less than 5MB");
       setFile(null);
       return;
     }
 
     setFile(selectedFile);
-    // Auto-upload when file is selected
     handleUpload(selectedFile);
   };
 
@@ -44,33 +39,30 @@ function MinimalProfilePicUploader({ onUpload }) {
     setUploading(true);
     setError(null);
 
-    // Check if user is authenticated
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("You must be logged in to upload a profile picture");
-      setUploading(false);
-      return;
-    }
-
     const formData = new FormData();
     formData.append("profilepic", fileToUpload);
 
     try {
-      const res = await usersAPI.updateProfilePic(formData);
+      const res = await api.put("/users/profile-pic", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       onUpload(res.data.profilepic);
       setFile(null);
     } catch (error) {
       console.error("Upload failed", error);
-      if (error.code === 'ECONNABORTED') {
-        setError("Upload timed out. Please try again with a smaller file.");
-      } else if (error.response?.status === 401) {
-        setError("Authentication failed. Please log in again.");
+
+      if (error.response?.status === 401) {
+        setError("You must be logged in to upload a profile picture");
+      } else if (error.code === "ECONNABORTED") {
+        setError("Upload timed out. Please try a smaller file.");
       } else {
         setError(
-          error.response?.data?.message ||
-          error.message ||
-          "Upload failed. Please try again."
+          error.response?.data?.msg ||
+            error.message ||
+            "Upload failed. Please try again."
         );
       }
     } finally {
@@ -80,7 +72,6 @@ function MinimalProfilePicUploader({ onUpload }) {
 
   return (
     <div className="flex flex-col items-center space-y-3">
-      {/* Minimal Upload Button */}
       <div className="relative">
         <input
           id="minimal-file-input"
@@ -91,7 +82,10 @@ function MinimalProfilePicUploader({ onUpload }) {
           disabled={uploading}
         />
         <button
-          onClick={() => !uploading && document.getElementById('minimal-file-input').click()}
+          onClick={() =>
+            !uploading &&
+            document.getElementById("minimal-file-input").click()
+          }
           disabled={uploading}
           className={`inline-flex items-center space-x-2 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-300 ${
             uploading
@@ -101,14 +95,29 @@ function MinimalProfilePicUploader({ onUpload }) {
         >
           {uploading ? (
             <>
-              <div className="w-4 h-4 border-2 border-gray-400 dark:border-gray-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
               <span>Uploading...</span>
             </>
           ) : (
             <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
               <span>Change Photo</span>
             </>
@@ -116,10 +125,9 @@ function MinimalProfilePicUploader({ onUpload }) {
         </button>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="text-center max-w-xs">
-          <p className="text-red-500 dark:text-red-400 text-xs leading-tight">{error}</p>
+          <p className="text-red-500 text-xs">{error}</p>
         </div>
       )}
     </div>

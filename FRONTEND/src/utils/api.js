@@ -1,100 +1,115 @@
-import axios from 'axios';
-import config, { getApiUrl } from '../config/environment.js';
+import axios from "axios";
+import config from "../config/environment.js";
 
-// Create axios instance with default configuration
+/**
+ * Axios instance
+ * - Uses HttpOnly cookies
+ * - Base URL points to /api (VERY IMPORTANT)
+ */
 const api = axios.create({
-  baseURL: config.API_BASE_URL,
-  ...config.axiosConfig,
+  baseURL: `${config.API_BASE_URL}/api`, // ✅ FIXED
+  withCredentials: true,                // ✅ REQUIRED for cookies
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor for error handling
+/**
+ * Global response interceptor
+ * Handles expired / invalid sessions
+ */
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem('token');
-      window.location.href = '/';
+      try {
+        await api.post("/auth/logout");
+      } catch {
+        // ignore logout failure
+      }
+      window.location.href = "/";
     }
     return Promise.reject(error);
   }
 );
 
-// API methods
+/* ===================== AUTH ===================== */
+
 export const authAPI = {
-  login: (credentials) => api.post(config.endpoints.auth.login, credentials),
-  register: (userData) => api.post(config.endpoints.auth.register, userData),
-  logout: () => api.post(config.endpoints.auth.logout),
+  register: (data) => api.post("/auth/register", data),
+  login: (data) => api.post("/auth/login", data),
+  logout: () => api.post("/auth/logout"),
+  me: () => api.get("/auth/me"),
 };
 
-export const postsAPI = {
-  baseURL: config.API_BASE_URL,
-  
-  getPosts: () => api.get(config.endpoints.posts.list),
-  
-  createPost: (postData) => api.post(config.endpoints.posts.create, postData),
-  
-  createPostWithMedia: (formData) => {
-    return api.post('/api/posts/with-media', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  },
-  
-  deletePost: (postId) => api.delete(`${config.endpoints.posts.base}/${postId}`),
-};
-
-export const usersAPI = {
-
-  getUsers: () => api.get(config.endpoints.users.base),
-  
-  updateProfilePic: (formData) => api.put(config.endpoints.users.profilePic, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  }),
-  getProfile: (username) => api.get(`${config.endpoints.users.base}/${username}`),
-};
-
-export const commentsAPI = {
-  addComment: (postId, commentData) => api.post(`${config.endpoints.comments}/${postId}`, commentData),
-  getComments: (postId) => api.get(`${config.endpoints.comments}/${postId}`),
-};
+/* ===================== ADMIN ===================== */
 
 export const adminAPI = {
-  login: (credentials) => api.post(config.endpoints.auth.adminLogin, credentials),
+  login: (data) => api.post("/auth/admin/login", data),
 
-  // Dashboard endpoints
-  getDashboardStats: () => api.get('/admin/dashboard/stats'),
-  getRecentActivity: () => api.get('/admin/dashboard/activity'),
+  // Dashboard
+  getDashboardStats: () => api.get("/admin/dashboard/stats"),
+  getRecentActivity: () => api.get("/admin/dashboard/activity"),
 
-  // User management endpoints
-  getUsers: () => api.get('/admin/users'),
-  deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
+  // Users
+  getUsers: () => api.get("/admin/users"),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
 
-  // Post management endpoints
-  getPosts: (page = 1, limit = 10) => api.get(`/admin/posts?page=${page}&limit=${limit}`),
-  deletePost: (postId) => api.delete(`/admin/posts/${postId}`),
+  // Posts
+  getPosts: (page = 1, limit = 10) =>
+    api.get(`/admin/posts?page=${page}&limit=${limit}`),
+  deletePost: (id) => api.delete(`/admin/posts/${id}`),
 
-  // Settings endpoints
-  getSettings: () => api.get('/admin/settings'),
-  updateSettings: (settings) => api.put('/admin/settings', settings),
+  // Settings
+  getSettings: () => api.get("/admin/settings"),
+  updateSettings: (data) => api.put("/admin/settings", data),
 };
 
-// Export the configured axios instance for direct use if needed
+/* ===================== USERS ===================== */
+
+export const usersAPI = {
+  getProfile: (username) => api.get(`/users/${username}`),
+
+  updateProfilePic: (formData) =>
+    api.put("/users/profile-pic", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+};
+
+/* ===================== POSTS ===================== */
+
+export const postsAPI = {
+  getPosts: () => api.get("/posts"),
+
+  createPost: (data) => api.post("/posts", data),
+
+  createPostWithMedia: (formData) =>
+    api.post("/posts/with-media", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+
+  deletePost: (id) => api.delete(`/posts/${id}`),
+};
+
+/* ===================== COMMENTS ===================== */
+
+export const commentsAPI = {
+  addComment: (postId, data) =>
+    api.post(`/comments/${postId}`, data),
+
+  getComments: (postId) =>
+    api.get(`/comments/${postId}`),
+};
+
+/* ===================== LIKES ===================== */
+
+export const likesAPI = {
+  toggleLike: (postId) =>
+    api.post(`/likes/${postId}`),
+};
+
 export default api;

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { authAPI } from "../utils/api";
+import api from "../utils/api"; // ✅ FIXED IMPORT
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -44,7 +44,7 @@ function Register() {
     }
 
     try {
-      const response = await authAPI.register({
+      await api.post("/auth/register", {
         username,
         email,
         password,
@@ -58,7 +58,7 @@ function Register() {
       console.error("Registration error:", error);
       setError(
         error.response?.data?.msg ||
-        "Registration failed. Please try again."
+          "Registration failed. Please try again."
       );
     } finally {
       setLoading(false);
@@ -70,7 +70,9 @@ function Register() {
       <Navbar />
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-full max-w-md border dark:border-gray-700">
-          <h2 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-white">Register</h2>
+          <h2 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-white">
+            Register
+          </h2>
 
           {error && (
             <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-400 rounded">
@@ -91,7 +93,7 @@ function Register() {
               placeholder="Username"
               value={formData.username}
               onChange={handleChange}
-              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
+              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700"
               disabled={loading}
               required
             />
@@ -101,7 +103,7 @@ function Register() {
               placeholder="Email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
+              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700"
               disabled={loading}
               required
             />
@@ -111,13 +113,13 @@ function Register() {
               placeholder="Password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
+              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700"
               disabled={loading}
               required
               minLength={6}
             />
             <button
-              className="w-full bg-blue-600 dark:bg-blue-500 text-white p-2 rounded hover:bg-blue-700 dark:hover:bg-blue-600 disabled:bg-blue-400 dark:disabled:bg-blue-600 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-blue-600 text-white p-2 rounded"
               type="submit"
               disabled={loading}
             >

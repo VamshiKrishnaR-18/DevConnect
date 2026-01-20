@@ -10,11 +10,17 @@ import likeRoutes from "./routes/likeRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import {Server} from "socket.io";
 import http from "http";
+import cookieParser from "cookie-parser";
 
 // Load environment variables
+
+
 dotenv.config();
 
 const app = express();
+
+app.use(cookieParser()); 
+
 const port = process.env.PORT || 3000;
 const server = http.createServer(app);
 
