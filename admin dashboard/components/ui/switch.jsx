@@ -1,1 +1,0 @@
-"use client" import * as React from "react" import * as SwitchPrimitive from "@radix-ui/react-switch@1.1.3" import {\n cn\n} from "./utils" function Switch({\n className, ...props\n}) {\n \n return ( );\n} export {\n Switch\n}; 
