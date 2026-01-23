@@ -1,58 +1,78 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import AppError from "../utils/AppError.js";
+import catchAsync from "../utils/catchAsync.js";
 
-const cookieOptions = {
-  httpOnly: true,
-  secure: false, // set true in production (HTTPS)
-  sameSite: "lax",
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+/* ===================== HELPERS ===================== */
+
+const signToken = (payload) => {
+  if (!process.env.JWT_SECRET) {
+    throw new AppError("JWT secret not configured", 500);
+  }
+
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
 };
 
-// REGISTER
-export const registerUser = async (req, res) => {
+const sendTokenCookie = (res, token) => {
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+};
+
+/* ===================== REGISTER ===================== */
+
+export const registerUser = catchAsync(async (req, res, next) => {
   const { username, email, password } = req.body;
 
-  if (!username || !email || !password)
-    return res.status(400).json({ msg: "All fields required" });
-
-  const exists = await User.findOne({ $or: [{ email }, { username }] });
-  if (exists)
-    return res.status(400).json({ msg: "User already exists" });
-
-  const hashed = await bcrypt.hash(password, 10);
-
-  const user = await User.create({
-    username,
-    email,
-    password: hashed,
+  const exists = await User.findOne({
+    $or: [{ email }, { username }],
   });
 
-  res.status(201).json({ msg: "Registered successfully" });
-};
+  if (exists) {
+    return next(new AppError("User already exists", 400));
+  }
 
-// LOGIN (USER)
-export const loginUser = async (req, res) => {
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await User.create({
+    username,
+    email,
+    password: hashedPassword,
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Registered successfully",
+  });
+});
+
+/* ===================== LOGIN (USER) ===================== */
+
+export const loginUser = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
-  if (!user) return res.status(401).json({ msg: "Invalid credentials" });
+  if (!user) {
+    return next(new AppError("Invalid credentials", 401));
+  }
 
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) return res.status(401).json({ msg: "Invalid credentials" });
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return next(new AppError("Invalid credentials", 401));
+  }
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
+  const token = signToken({ id: user._id });
 
-  res.cookie("token", token, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-});
+  sendTokenCookie(res, token);
 
-
-  res.json({
+  res.status(200).json({
+    success: true,
     user: {
       _id: user._id,
       username: user.username,
@@ -61,32 +81,32 @@ export const loginUser = async (req, res) => {
       profilepic: user.profilepic,
     },
   });
-};
+});
 
-// LOGIN (ADMIN)
-export const loginAdmin = async (req, res) => {
+/* ===================== LOGIN (ADMIN) ===================== */
+
+export const loginAdmin = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   const admin = await User.findOne({ email, role: "admin" });
-  if (!admin) return res.status(401).json({ msg: "Invalid credentials" });
+  if (!admin) {
+    return next(new AppError("Invalid credentials", 401));
+  }
 
-  const match = await bcrypt.compare(password, admin.password);
-  if (!match) return res.status(401).json({ msg: "Invalid credentials" });
+  const isMatch = await bcrypt.compare(password, admin.password);
+  if (!isMatch) {
+    return next(new AppError("Invalid credentials", 401));
+  }
 
-  const token = jwt.sign(
-    { id: admin._id, role: "admin" },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+  const token = signToken({
+    id: admin._id,
+    role: "admin",
+  });
 
-  res.cookie("token", token, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-});
+  sendTokenCookie(res, token);
 
-
-  res.json({
+  res.status(200).json({
+    success: true,
     user: {
       _id: admin._id,
       username: admin.username,
@@ -94,15 +114,24 @@ export const loginAdmin = async (req, res) => {
       role: admin.role,
     },
   });
-};
+});
 
-// LOGOUT
+/* ===================== LOGOUT ===================== */
+
 export const logoutUser = (req, res) => {
   res.clearCookie("token");
-  res.json({ msg: "Logged out" });
+
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
 };
 
-// GET CURRENT USER
+/* ===================== GET CURRENT USER ===================== */
+
 export const getMe = (req, res) => {
-  res.json({ user: req.user });
+  res.status(200).json({
+    success: true,
+    user: req.user,
+  });
 };

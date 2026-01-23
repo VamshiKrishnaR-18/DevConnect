@@ -1,20 +1,34 @@
 import express from "express";
-import { registerUser, loginUser, loginAdmin } from "../controllers/authController.js";
+import {
+  registerUser,
+  loginUser,
+  loginAdmin,
+  logoutUser,
+  getMe,
+} from "../controllers/authController.js";
+
+import validate from "../middleware/validate.js";
+import { registerSchema, loginSchema } from "../validations/auth.validation.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 import adminProtect from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
-router.post("/admin/login", loginAdmin);
+/* ===================== AUTH ===================== */
 
-router.get("/me", adminProtect, (req, res) => {
-  res.status(200).json({ user: req.user });
-});
+// Register
+router.post("/register", validate(registerSchema), registerUser);
 
-router.post("/logout", (req, res) => {
-  res.clearCookie("token");
-  res.json({ msg: "Logged out" });
-});
+// Login (user)
+router.post("/login", validate(loginSchema), loginUser);
+
+// Login (admin)
+router.post("/admin/login", validate(loginSchema), loginAdmin);
+
+// Get current user
+router.get("/me", authMiddleware, getMe);
+
+// Logout
+router.post("/logout", authMiddleware, logoutUser);
 
 export default router;

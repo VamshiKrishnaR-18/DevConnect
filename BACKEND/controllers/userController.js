@@ -1,186 +1,147 @@
 import userModel from "../models/userModel.js";
 import postModel from "../models/postModel.js";
+import AppError from "../utils/AppError.js";
+import catchAsync from "../utils/catchAsync.js";
 
-export const getProfile = async (req, res) => {
-  try {
-    const { username } = req.params;
+/* ===================== GET PROFILE ===================== */
 
-    if (!username) {
-      return res.status(400).json({ message: "Username is required" });
-    }
+export const getProfile = catchAsync(async (req, res, next) => {
+  const { username } = req.params;
 
-    const user = await userModel
-      .findOne({ username })
-      .select("-password")
-      .populate("followers", "username profilepic")
-      .populate("following", "username profilepic");
+  const user = await userModel
+    .findOne({ username })
+    .select("-password")
+    .populate("followers", "username profilepic")
+    .populate("following", "username profilepic");
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const posts = await postModel
-      .find({ user: user._id })
-      .populate("user", "username profilepic")
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({
-      user,
-      posts,
-      totalPosts: posts.length
-    });
-  } catch (err) {
-    console.error("Get profile error:", err);
-    res.status(500).json({ message: "Internal Server Error" });
+  if (!user) {
+    return next(new AppError("User not found", 404));
   }
-};
 
-export const followUser = async (req, res) => {
-  try {
-    const { id } = req.params;
+  const posts = await postModel
+    .find({ user: user._id })
+    .populate("user", "username profilepic")
+    .sort({ createdAt: -1 });
 
-    if (!id) {
-      return res.status(400).json({ message: "User ID is required" });
-    }
+  res.status(200).json({
+    success: true,
+    user,
+    posts,
+    totalPosts: posts.length,
+  });
+});
 
-    if (id === req.user._id.toString()) {
-      return res.status(400).json({ message: "You cannot follow yourself" });
-    }
+/* ===================== FOLLOW USER ===================== */
 
-    const currentUser = await userModel.findById(req.user._id);
-    const targetUser = await userModel.findById(id);
+export const followUser = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
 
-    if (!targetUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
+  if (id === req.user._id.toString()) {
+    return next(new AppError("You cannot follow yourself", 400));
+  }
 
-    if (targetUser.followers.includes(currentUser._id)) {
-      return res.status(400).json({ message: "You are already following this user" });
-    }
+  const currentUser = await userModel.findById(req.user._id);
+  const targetUser = await userModel.findById(id);
 
-    targetUser.followers.push(currentUser._id);
-    currentUser.following.push(targetUser._id);
+  if (!targetUser) {
+    return next(new AppError("User not found", 404));
+  }
 
-    await targetUser.save();
-    await currentUser.save();
+  if (targetUser.followers.includes(currentUser._id)) {
+    return next(new AppError("You are already following this user", 400));
+  }
 
-    // Emit socket event for real-time updates
-    const io = req.app.get("io");
+  targetUser.followers.push(currentUser._id);
+  currentUser.following.push(targetUser._id);
+
+  await targetUser.save();
+  await currentUser.save();
+
+  const io = req.app.get("io");
+  if (io) {
     io.emit("userFollowed", {
       followerId: currentUser._id,
       followedId: targetUser._id,
-      followersCount: targetUser.followers.length
+      followersCount: targetUser.followers.length,
     });
-
-    res.status(200).json({
-      message: "User followed successfully",
-      followersCount: targetUser.followers.length
-    });
-  } catch (err) {
-    console.error("Follow user error:", err);
-    res.status(500).json({ message: "Internal Server Error" });
   }
-};
 
-export const unFollowUser = async (req, res) => {
-  try {
-    const { id } = req.params;
+  res.status(200).json({
+    success: true,
+    message: "User followed successfully",
+    followersCount: targetUser.followers.length,
+  });
+});
 
-    if (!id) {
-      return res.status(400).json({ message: "User ID is required" });
-    }
+/* ===================== UNFOLLOW USER ===================== */
 
-    if (id === req.user._id.toString()) {
-      return res.status(400).json({ message: "You cannot unfollow yourself" });
-    }
+export const unFollowUser = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
 
-    const currentUser = await userModel.findById(req.user._id);
-    const targetUser = await userModel.findById(id);
+  if (id === req.user._id.toString()) {
+    return next(new AppError("You cannot unfollow yourself", 400));
+  }
 
-    if (!targetUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
+  const currentUser = await userModel.findById(req.user._id);
+  const targetUser = await userModel.findById(id);
 
-    if (!targetUser.followers.includes(currentUser._id)) {
-      return res.status(400).json({ message: "You are not following this user" });
-    }
+  if (!targetUser) {
+    return next(new AppError("User not found", 404));
+  }
 
-    targetUser.followers = targetUser.followers.filter(
-      (followerId) => !followerId.equals(currentUser._id)
-    );
-    currentUser.following = currentUser.following.filter(
-      (followingId) => !followingId.equals(targetUser._id)
-    );
+  if (!targetUser.followers.includes(currentUser._id)) {
+    return next(new AppError("You are not following this user", 400));
+  }
 
-    await targetUser.save();
-    await currentUser.save();
+  targetUser.followers = targetUser.followers.filter(
+    (followerId) => !followerId.equals(currentUser._id)
+  );
 
-    // Emit socket event for real-time updates
-    const io = req.app.get("io");
+  currentUser.following = currentUser.following.filter(
+    (followingId) => !followingId.equals(targetUser._id)
+  );
+
+  await targetUser.save();
+  await currentUser.save();
+
+  const io = req.app.get("io");
+  if (io) {
     io.emit("userUnfollowed", {
       followerId: currentUser._id,
       unfollowedId: targetUser._id,
-      followersCount: targetUser.followers.length
+      followersCount: targetUser.followers.length,
     });
-
-    res.status(200).json({
-      message: "User unfollowed successfully",
-      followersCount: targetUser.followers.length
-    });
-  } catch (err) {
-    console.error("Unfollow user error:", err);
-    res.status(500).json({ message: "Internal Server Error" });
   }
-};
 
-export const updateProfilePic = async (req, res) => {
-  try {
-    console.log("Profile pic upload request received");
-    console.log("User ID:", req.user?._id);
-    console.log("File info:", req.file ? {
-      fieldname: req.file.fieldname,
-      originalname: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      path: req.file.path
-    } : "No file");
+  res.status(200).json({
+    success: true,
+    message: "User unfollowed successfully",
+    followersCount: targetUser.followers.length,
+  });
+});
 
-    // Check if file was uploaded
-    if (!req.file) {
-      console.log("No file uploaded");
-      return res.status(400).json({ message: "No file uploaded" });
-    }
+/* ===================== UPDATE PROFILE PIC ===================== */
 
-    const user = await userModel.findById(req.user._id);
-
-    if (!user) {
-      console.log("User not found");
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Handle both Cloudinary and local file paths
-    let profilePicUrl;
-    if (req.file.path && req.file.path.startsWith('http')) {
-      // Cloudinary URL
-      profilePicUrl = req.file.path;
-    } else {
-      // Local file - convert to server URL
-      profilePicUrl = `/uploads/${req.file.filename}`;
-    }
-    console.log("Updating user profilepic to:", profilePicUrl);
-    user.profilepic = profilePicUrl;
-
-    await user.save();
-    console.log("Profile picture updated successfully");
-
-    res.status(200).json({
-      message: "Profile picture updated successfully",
-      profilepic: user.profilepic
-    });
-
-  } catch(err) {
-    console.error("Update profile pic error:", err);
-    console.error("Error stack:", err.stack);
-    res.status(500).json({ message: "Internal Server Error", error: err.message });
+export const updateProfilePic = catchAsync(async (req, res, next) => {
+  if (!req.file) {
+    return next(new AppError("No file uploaded", 400));
   }
-}
+
+  const user = await userModel.findById(req.user._id);
+  if (!user) {
+    return next(new AppError("User not found", 404));
+  }
+
+  const profilePicUrl = req.file.path?.startsWith("http")
+    ? req.file.path
+    : `/uploads/${req.file.filename}`;
+
+  user.profilepic = profilePicUrl;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Profile picture updated successfully",
+    profilepic: user.profilepic,
+  });
+});

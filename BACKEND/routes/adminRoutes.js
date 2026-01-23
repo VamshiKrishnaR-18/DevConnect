@@ -7,26 +7,48 @@ import {
   getPosts,
   deletePost,
   getSettings,
-  updateSettings
+  updateSettings,
 } from "../controllers/adminController.js";
+
 import adminProtect from "../middleware/adminMiddleware.js";
+import validate from "../middleware/validate.js";
+import {
+  deleteUserSchema,
+  deletePostSchema,
+  updateSettingsSchema,
+} from "../validations/admin.validation.js";
 
 const router = express.Router();
 
-// Dashboard routes
+/* ===================== DASHBOARD ===================== */
 router.get("/dashboard/stats", adminProtect, getDashboardStats);
 router.get("/dashboard/activity", adminProtect, getRecentActivity);
 
-// User management routes
+/* ===================== USERS ===================== */
 router.get("/users", adminProtect, getUsers);
-router.delete("/users/:userId", adminProtect, deleteUser);
+router.delete(
+  "/users/:userId",
+  adminProtect,
+  validate(deleteUserSchema),
+  deleteUser
+);
 
-// Post management routes
+/* ===================== POSTS ===================== */
 router.get("/posts", adminProtect, getPosts);
-router.delete("/posts/:postId", adminProtect, deletePost);
+router.delete(
+  "/posts/:postId",
+  adminProtect,
+  validate(deletePostSchema),
+  deletePost
+);
 
-// Settings routes
+/* ===================== SETTINGS ===================== */
 router.get("/settings", adminProtect, getSettings);
-router.put("/settings", adminProtect, updateSettings);
+router.put(
+  "/settings",
+  adminProtect,
+  validate(updateSettingsSchema),
+  updateSettings
+);
 
 export default router;

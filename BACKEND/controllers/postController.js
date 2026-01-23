@@ -1,239 +1,191 @@
 import postModel from "../models/postModel.js";
+import AppError from "../utils/AppError.js";
+import catchAsync from "../utils/catchAsync.js";
 
-export const createPost = async (req, res) => {
-  try {
-    const { content } = req.body;
+/* ===================== CREATE POST (TEXT) ===================== */
 
-    // Validation
-    if (!content || !content.trim()) {
-      return res.status(400).json({ message: "Post content is required" });
-    }
+export const createPost = catchAsync(async (req, res, next) => {
+  const { content } = req.body;
 
-    if (content.length > 1000) {
-      return res
-        .status(400)
-        .json({ message: "Post content cannot exceed 1000 characters" });
-    }
+  const post = await postModel.create({
+    content: content.trim(),
+    user: req.user._id,
+  });
 
-    const newPost = new postModel({
-      content: content.trim(),
-      user: req.user._id,
-    });
+  await post.populate("user", "username profilepic");
 
-    const savedPost = await newPost.save();
-
-    // Populate user data for response
-    await newPost.populate("user", "username profilepic");
-
-    const io = req.app.get("io");
-    if (io) {
-      io.emit("newPost", savedPost);
-    }
-
-    res.status(201).json({
-      message: "Post created successfully",
-      post: savedPost,
-    });
-  } catch (err) {
-    console.error("Create post error:", err);
-
-    // Handle mongoose validation errors
-    if (err.name === "ValidationError") {
-      const errors = Object.values(err.errors).map((e) => e.message);
-      return res.status(400).json({ message: errors.join(", ") });
-    }
-
-    res.status(500).json({ message: "Failed to create post" });
+  const io = req.app.get("io");
+  if (io) {
+    io.emit("newPost", post);
   }
-};
 
-export const createPostWithMedia = async (req, res) => {
-  try {
-    const { content } = req.body;
+  res.status(201).json({
+    success: true,
+    message: "Post created successfully",
+    post,
+  });
+});
 
-    // ----------------------------------------------------------------------
-    // ✅ FIX: Allow empty content IF there is media attached
-    // ----------------------------------------------------------------------
-    const hasMedia = req.files && req.files.length > 0;
-    const hasContent = content && content.trim().length > 0;
+/* ===================== CREATE POST (MEDIA) ===================== */
 
-    if (!hasMedia && !hasContent) {
-      return res.status(400).json({ message: "Post must contain either text or media" });
-    }
+export const createPostWithMedia = catchAsync(async (req, res, next) => {
+  const { content } = req.body;
 
-    if (hasContent && content.length > 1000) {
-      return res.status(400).json({ message: "Post content cannot exceed 1000 characters" });
-    }
+  const hasContent = content && content.trim().length > 0;
+  const hasMedia = req.files && req.files.length > 0;
 
-    // Process uploaded media
-    const media = [];
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        const mediaItem = {
-          type: file.mimetype.startsWith('image/') ? 'image' : 'video',
-          filename: file.originalname,
-        };
+  const media = [];
 
-        if (file.path && file.path.startsWith('http')) {
-          // Cloudinary URL
-          mediaItem.url = file.path;
-          mediaItem.publicId = file.filename;
-        } else if (file.filename) {
-          // Local storage URL
-          mediaItem.url = `/uploads/${file.filename}`;
-          mediaItem.publicId = file.filename;
-        }
+  if (hasMedia) {
+    for (const file of req.files) {
+      const mediaItem = {
+        type: file.mimetype.startsWith("image/") ? "image" : "video",
+        filename: file.originalname,
+      };
 
-        media.push(mediaItem);
+      if (file.path?.startsWith("http")) {
+        mediaItem.url = file.path;
+        mediaItem.publicId = file.filename;
+      } else {
+        mediaItem.url = `/uploads/${file.filename}`;
+        mediaItem.publicId = file.filename;
       }
+
+      media.push(mediaItem);
     }
-
-    const newPost = new postModel({
-      content: content ? content.trim() : "", // Allow empty string if media exists
-      user: req.user._id,
-      media: media,
-    });
-
-    const savedPost = await newPost.save();
-    await savedPost.populate("user", "username profilepic");
-
-    const io = req.app.get("io");
-    if (io) {
-      io.emit("newPost", savedPost);
-    }
-
-    res.status(201).json({
-      message: "Post created successfully",
-      post: savedPost
-    });
-
-  } catch (error) {
-    console.error("Create post with media error:", error);
-    res.status(500).json({
-      message: "Internal Server Error",
-      error: error.message
-    });
   }
-};
 
-export const getAllPosts = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+  const post = await postModel.create({
+    content: hasContent ? content.trim() : "",
+    user: req.user._id,
+    media,
+  });
 
-    const posts = await postModel
-      .find()
-      .populate("user", "username profilepic")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+  await post.populate("user", "username profilepic");
 
-    const totalPosts = await postModel.countDocuments();
-    const totalPages = Math.ceil(totalPosts / limit);
-
-    res.status(200).json({
-      posts,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalPosts,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
-    });
-  } catch (err) {
-    console.error("Get all posts error:", err);
-    res.status(500).json({ message: "Failed to get posts" });
+  const io = req.app.get("io");
+  if (io) {
+    io.emit("newPost", post);
   }
-};
 
-export const getPostById = async (req, res) => {
-  try {
-    const { id } = req.params;
+  res.status(201).json({
+    success: true,
+    message: "Post created successfully",
+    post,
+  });
+});
 
-    const post = await postModel
-      .findById(id)
-      .populate("user", "username profilepic")
-      .populate("comments.user", "username profilepic");
+/* ===================== GET ALL POSTS ===================== */
 
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
+export const getAllPosts = catchAsync(async (req, res, next) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
 
-    res.status(200).json(post);
-  } catch (err) {
-    console.error("Get post by ID error:", err);
-    res.status(500).json({ message: "Failed to get post" });
+  const posts = await postModel
+    .find()
+    .populate("user", "username profilepic")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalPosts = await postModel.countDocuments();
+  const totalPages = Math.ceil(totalPosts / limit);
+
+  res.status(200).json({
+    success: true,
+    posts,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalPosts,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    },
+  });
+});
+
+/* ===================== GET POST BY ID ===================== */
+
+export const getPostById = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  const post = await postModel
+    .findById(id)
+    .populate("user", "username profilepic")
+    .populate("comments.user", "username profilepic");
+
+  if (!post) {
+    return next(new AppError("Post not found", 404));
   }
-};
 
-export const deletePost = async (req, res) => {
-  try {
-    const { id } = req.params;
+  res.status(200).json({
+    success: true,
+    post,
+  });
+});
 
-    const post = await postModel.findById(id);
+/* ===================== DELETE POST ===================== */
 
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
+export const deletePost = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
 
-    // Check if user owns the post
-    if (post.user.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({ message: "You can only delete your own posts" });
-    }
-
-    await postModel.findByIdAndDelete(id);
-
-    const io = req.app.get("io");
-    if (io) {
-      io.emit("postDeleted", id);
-    }
-
-    res.status(200).json({ message: "Post deleted successfully" });
-  } catch (err) {
-    console.error("Delete post error:", err);
-    res.status(500).json({ message: "Failed to delete post" });
+  const post = await postModel.findById(id);
+  if (!post) {
+    return next(new AppError("Post not found", 404));
   }
-};
 
-export const toggleLike = async (req, res) => {
-  try {
-    const postId = req.params.postId;
-    const userId = req.user._id;
+  if (post.user.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError("You can only delete your own posts", 403)
+    );
+  }
 
-    const post = await postModel.findById(postId);
+  await postModel.findByIdAndDelete(id);
 
-    if (!post) {
-      return res.status(404).json("Post not found");
-    }
+  const io = req.app.get("io");
+  if (io) {
+    io.emit("postDeleted", id);
+  }
 
-    const liked = post.likes.includes(userId);
+  res.status(200).json({
+    success: true,
+    message: "Post deleted successfully",
+  });
+});
 
-    if (liked) {
-      post.likes.pull(userId);
-    } else {
-      post.likes.push(userId);
-    }
+/* ===================== TOGGLE LIKE ===================== */
 
-    await post.save();
+export const toggleLike = catchAsync(async (req, res, next) => {
+  const { postId } = req.params;
+  const userId = req.user._id;
 
-    const io = req.app.get("io");
-    if (io) {
-      io.emit("postLiked", {
-        postId: post._id,
-        likes: post.likes,
-      });
-    }
+  const post = await postModel.findById(postId);
+  if (!post) {
+    return next(new AppError("Post not found", 404));
+  }
 
-    return res.status(200).json({
-      message: liked ? "post unliked" : "post liked",
+  const liked = post.likes.includes(userId);
+
+  if (liked) {
+    post.likes.pull(userId);
+  } else {
+    post.likes.push(userId);
+  }
+
+  await post.save();
+
+  const io = req.app.get("io");
+  if (io) {
+    io.emit("postLiked", {
+      postId: post._id,
       likes: post.likes,
     });
-  } catch (err) {
-    console.error("Toggle like error:", err);
-    res.status(500).json({ message: "Failed to like" });
   }
-};
+
+  res.status(200).json({
+    success: true,
+    message: liked ? "Post unliked" : "Post liked",
+    likes: post.likes,
+  });
+});
