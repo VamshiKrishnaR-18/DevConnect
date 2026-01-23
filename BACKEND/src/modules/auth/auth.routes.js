@@ -1,4 +1,5 @@
 import express from "express";
+import { authRateLimiter } from "../../middlewares/rateLimit.middleware.js";
 
 import {
   registerUser,
@@ -22,10 +23,10 @@ const router = express.Router();
 /* ===================== AUTH ===================== */
 
 // Register
-router.post("/register", validate(registerSchema), registerUser);
+router.post("/register",authRateLimiter, validate(registerSchema), registerUser);
 
 // Login (user)
-router.post("/login", validate(loginSchema), loginUser);
+router.post("/login",authRateLimiter, validate(loginSchema), loginUser);
 
 // Login (admin)
 router.post("/admin/login", validate(loginSchema), loginAdmin);

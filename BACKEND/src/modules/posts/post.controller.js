@@ -1,4 +1,4 @@
-import Post from "../../models/Post.model.js";
+import postModel from "../../models/Post.model.js";
 import AppError from "../../utils/AppError.js";
 import catchAsync from "../../utils/catchAsync.js";
 
@@ -6,6 +6,10 @@ import catchAsync from "../../utils/catchAsync.js";
 
 export const createPost = catchAsync(async (req, res, next) => {
   const { content } = req.body;
+
+  if (!content || !content.trim()) {
+    return next(new AppError("Post content is required", 400));
+  }
 
   const post = await postModel.create({
     content: content.trim(),
