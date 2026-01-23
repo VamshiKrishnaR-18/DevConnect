@@ -1,6 +1,7 @@
-import commentModel from "../models/commentModel.js";
-import AppError from "../utils/AppError.js";
-import catchAsync from "../utils/catchAsync.js";
+import Comment from "../../models/Comment.model.js";
+import AppError from "../../utils/AppError.js";
+import catchAsync from "../../utils/catchAsync.js";
+
 
 /* ===================== ADD COMMENT ===================== */
 

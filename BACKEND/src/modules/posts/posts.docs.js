@@ -1,4 +1,4 @@
-import { registry } from "../openapi.js";
+import { registry } from "../../docs/openapi.js";
 import { z } from "zod";
 import { createPostSchema } from "../../validations/post.validation.js";
 

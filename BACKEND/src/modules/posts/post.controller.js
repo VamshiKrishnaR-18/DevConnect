@@ -1,6 +1,6 @@
-import postModel from "../models/postModel.js";
-import AppError from "../utils/AppError.js";
-import catchAsync from "../utils/catchAsync.js";
+import Post from "../../models/Post.model.js";
+import AppError from "../../utils/AppError.js";
+import catchAsync from "../../utils/catchAsync.js";
 
 /* ===================== CREATE POST (TEXT) ===================== */
 

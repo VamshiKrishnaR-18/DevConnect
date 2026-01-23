@@ -1,4 +1,5 @@
 import express from "express";
+
 import {
   getUsers,
   deleteUser,
@@ -8,15 +9,16 @@ import {
   deletePost,
   getSettings,
   updateSettings,
-} from "../controllers/adminController.js";
+} from "./admin.controller.js";
 
-import adminProtect from "../middleware/adminMiddleware.js";
-import validate from "../middleware/validate.js";
+import adminProtect from "../../middlewares/admin.middleware.js";
+import validate from "../../middlewares/validate.middleware.js";
+
 import {
   deleteUserSchema,
   deletePostSchema,
   updateSettingsSchema,
-} from "../validations/admin.validation.js";
+} from "../../validations/admin.validation.js";
 
 const router = express.Router();
 

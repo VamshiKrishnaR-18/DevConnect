@@ -1,16 +1,21 @@
 import express from "express";
+
 import {
   registerUser,
   loginUser,
   loginAdmin,
   logoutUser,
   getMe,
-} from "../controllers/authController.js";
+} from "./auth.controller.js";
 
-import validate from "../middleware/validate.js";
-import { registerSchema, loginSchema } from "../validations/auth.validation.js";
-import authMiddleware from "../middleware/authMiddleware.js";
-import adminProtect from "../middleware/adminMiddleware.js";
+import validate from "../../middlewares/validate.middleware.js";
+import authMiddleware from "../../middlewares/auth.middleware.js";
+import adminProtect from "../../middlewares/admin.middleware.js";
+
+import {
+  registerSchema,
+  loginSchema,
+} from "../../validations/auth.validation.js";
 
 const router = express.Router();
 

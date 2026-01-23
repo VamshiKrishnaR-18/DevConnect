@@ -1,7 +1,8 @@
-import userModel from "../models/userModel.js";
-import postModel from "../models/postModel.js";
-import AppError from "../utils/AppError.js";
-import catchAsync from "../utils/catchAsync.js";
+import User from "../../models/User.model.js";
+import Post from "../../models/Post.model.js";
+
+import AppError from "../../utils/AppError.js";
+import catchAsync from "../../utils/catchAsync.js";
 
 /* ===================== GET PROFILE ===================== */
 

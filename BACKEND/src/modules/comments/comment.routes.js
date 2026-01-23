@@ -1,24 +1,26 @@
 import express from "express";
+
 import {
   addComment,
   getComments,
   deleteComment,
-} from "../controllers/commentController.js";
+} from "./comment.controller.js";
 
-import protect from "../middleware/authMiddleware.js";
-import validate from "../middleware/validate.js";
+import authMiddleware from "../../middlewares/auth.middleware.js";
+import validate from "../../middlewares/validate.middleware.js";
+
 import {
   addCommentSchema,
   getCommentsSchema,
   deleteCommentSchema,
-} from "../validations/comment.validation.js";
+} from "../../validations/comment.validation.js";
 
 const router = express.Router();
 
 // Add comment
 router.post(
   "/",
-  protect,
+  authMiddleware,
   validate(addCommentSchema),
   addComment
 );
@@ -33,7 +35,7 @@ router.get(
 // Delete comment
 router.delete(
   "/:commentId",
-  protect,
+  authMiddleware,
   validate(deleteCommentSchema),
   deleteComment
 );
