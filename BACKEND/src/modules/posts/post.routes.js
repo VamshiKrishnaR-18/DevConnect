@@ -14,7 +14,9 @@ import { mediaUpload } from "../../middlewares/mediaUpload.middleware.js";
 
 import {
   createPostSchema,
-  deletePostSchema,
+  createPostWithMediaSchema,
+  getPostsSchema,
+  postIdParamSchema,
 } from "../../validations/post.validation.js";
 
 const router = express.Router();
@@ -25,7 +27,12 @@ const router = express.Router();
 router.use("/", likeRoutes);
 
 // Get all posts
-router.get("/", authMiddleware, getAllPosts);
+router.get(
+  "/",
+  authMiddleware,
+  validate(getPostsSchema),
+  getAllPosts
+);
 
 // Create text post
 router.post(
@@ -40,6 +47,7 @@ router.post(
   "/with-media",
   authMiddleware,
   mediaUpload.array("media", 5),
+  validate(createPostWithMediaSchema),
   createPostWithMedia
 );
 
@@ -47,7 +55,7 @@ router.post(
 router.delete(
   "/:id",
   authMiddleware,
-  validate(deletePostSchema),
+  validate(postIdParamSchema),
   deletePost
 );
 

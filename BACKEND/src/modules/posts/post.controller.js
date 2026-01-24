@@ -2,109 +2,85 @@ import postModel from "../../models/Post.model.js";
 import AppError from "../../utils/AppError.js";
 import catchAsync from "../../utils/catchAsync.js";
 
+import {
+  createPost,
+  createPostWithMedia,
+  toggleLikeService,
+  deletePostService,
+} from "../../services/post.service.js";
+
+import { SOCKET_EVENTS } from "../../constants/socketEvents.js";
+import { emitSocketEvent } from "../../utils/emitSocketEvent.js";
+
 /* ===================== CREATE POST (TEXT) ===================== */
 
-export const createPost = catchAsync(async (req, res, next) => {
-  const { content } = req.body;
-
-  if (!content || !content.trim()) {
-    return next(new AppError("Post content is required", 400));
-  }
-
-  const post = await postModel.create({
-    content: content.trim(),
-    user: req.user._id,
+export const createTextPost = catchAsync(async (req, res) => {
+  const post = await createPost({
+    userId: req.user._id,
+    content: req.body.content,
   });
 
-  await post.populate("user", "username profilepic");
-
   const io = req.app.get("io");
-  if (io) {
-    io.emit("newPost", post);
-  }
+  emitSocketEvent(io, SOCKET_EVENTS.POST_CREATED, {
+    post,
+  });
 
   res.status(201).json({
     success: true,
     message: "Post created successfully",
-    post,
+    data: { post },
   });
 });
 
 /* ===================== CREATE POST (MEDIA) ===================== */
 
-export const createPostWithMedia = catchAsync(async (req, res, next) => {
-  const { content } = req.body;
-
-  const hasContent = content && content.trim().length > 0;
-  const hasMedia = req.files && req.files.length > 0;
-
-  const media = [];
-
-  if (hasMedia) {
-    for (const file of req.files) {
-      const mediaItem = {
-        type: file.mimetype.startsWith("image/") ? "image" : "video",
-        filename: file.originalname,
-      };
-
-      if (file.path?.startsWith("http")) {
-        mediaItem.url = file.path;
-        mediaItem.publicId = file.filename;
-      } else {
-        mediaItem.url = `/uploads/${file.filename}`;
-        mediaItem.publicId = file.filename;
-      }
-
-      media.push(mediaItem);
-    }
-  }
-
-  const post = await postModel.create({
-    content: hasContent ? content.trim() : "",
-    user: req.user._id,
-    media,
+export const createMediaPost = catchAsync(async (req, res) => {
+  const post = await createPostWithMedia({
+    userId: req.user._id,
+    content: req.body.content,
+    files: req.files,
   });
 
-  await post.populate("user", "username profilepic");
-
   const io = req.app.get("io");
-  if (io) {
-    io.emit("newPost", post);
-  }
+  emitSocketEvent(io, SOCKET_EVENTS.POST_CREATED, {
+    post,
+  });
 
   res.status(201).json({
     success: true,
     message: "Post created successfully",
-    post,
+    data: { post },
   });
 });
 
 /* ===================== GET ALL POSTS ===================== */
 
-export const getAllPosts = catchAsync(async (req, res, next) => {
+export const getAllPosts = catchAsync(async (req, res) => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const posts = await postModel
-    .find()
-    .populate("user", "username profilepic")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
-
-  const totalPosts = await postModel.countDocuments();
-  const totalPages = Math.ceil(totalPosts / limit);
+  const [posts, totalPosts] = await Promise.all([
+    postModel
+      .find()
+      .populate("user", "username profilepic")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    postModel.countDocuments(),
+  ]);
 
   res.status(200).json({
     success: true,
-    posts,
-    pagination: {
-      currentPage: page,
-      totalPages,
-      totalPosts,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1,
+    data: {
+      posts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalPosts / limit),
+        totalPosts,
+        hasNextPage: page * limit < totalPosts,
+        hasPrevPage: page > 1,
+      },
     },
   });
 });
@@ -112,45 +88,35 @@ export const getAllPosts = catchAsync(async (req, res, next) => {
 /* ===================== GET POST BY ID ===================== */
 
 export const getPostById = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-
   const post = await postModel
-    .findById(id)
+    .findById(req.params.id)
     .populate("user", "username profilepic")
     .populate("comments.user", "username profilepic");
 
   if (!post) {
-    return next(new AppError("Post not found", 404));
+    return next(
+      new AppError("Post not found", 404, "POST_NOT_FOUND")
+    );
   }
 
   res.status(200).json({
     success: true,
-    post,
+    data: { post },
   });
 });
 
 /* ===================== DELETE POST ===================== */
 
-export const deletePost = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-
-  const post = await postModel.findById(id);
-  if (!post) {
-    return next(new AppError("Post not found", 404));
-  }
-
-  if (post.user.toString() !== req.user._id.toString()) {
-    return next(
-      new AppError("You can only delete your own posts", 403)
-    );
-  }
-
-  await postModel.findByIdAndDelete(id);
+export const deletePost = catchAsync(async (req, res) => {
+  const result = await deletePostService({
+    postId: req.params.id,
+    userId: req.user._id,
+  });
 
   const io = req.app.get("io");
-  if (io) {
-    io.emit("postDeleted", id);
-  }
+  emitSocketEvent(io, SOCKET_EVENTS.POST_DELETED, {
+    postId: result.postId,
+  });
 
   res.status(200).json({
     success: true,
@@ -160,36 +126,21 @@ export const deletePost = catchAsync(async (req, res, next) => {
 
 /* ===================== TOGGLE LIKE ===================== */
 
-export const toggleLike = catchAsync(async (req, res, next) => {
-  const { postId } = req.params;
-  const userId = req.user._id;
-
-  const post = await postModel.findById(postId);
-  if (!post) {
-    return next(new AppError("Post not found", 404));
-  }
-
-  const liked = post.likes.includes(userId);
-
-  if (liked) {
-    post.likes.pull(userId);
-  } else {
-    post.likes.push(userId);
-  }
-
-  await post.save();
+export const toggleLike = catchAsync(async (req, res) => {
+  const result = await toggleLikeService({
+    postId: req.params.postId,
+    userId: req.user._id,
+  });
 
   const io = req.app.get("io");
-  if (io) {
-    io.emit("postLiked", {
-      postId: post._id,
-      likes: post.likes,
-    });
-  }
+  emitSocketEvent(io, SOCKET_EVENTS.POST_LIKED, {
+    postId: result.postId,
+    likes: result.likes,
+  });
 
   res.status(200).json({
     success: true,
-    message: liked ? "Post unliked" : "Post liked",
-    likes: post.likes,
+    message: result.liked ? "Post unliked" : "Post liked",
+    data: { likes: result.likes },
   });
 });

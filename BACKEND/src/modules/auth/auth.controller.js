@@ -1,48 +1,24 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 import User from "../../models/User.model.js";
-
 import AppError from "../../utils/AppError.js";
 import catchAsync from "../../utils/catchAsync.js";
 
-import crypto from "crypto";
+import {
+  loginUserService,
+} from "../../services/auth.service.js";
 
-/* ===================== HELPERS ===================== */
-
-const signToken = (payload) => {
-  if (!process.env.JWT_SECRET) {
-    throw new AppError("JWT secret not configured", 500);
-  }
-
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-};
+/* ===================== COOKIE HELPER ===================== */
 
 const sendTokenCookie = (res, token) => {
   res.cookie("token", token, {
-  httpOnly: true,
-  secure: false,
-  sameSite: "lax",
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-});
-
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
 };
-
-
-const generateResetToken = () => {
-  const resetToken = crypto.randomBytes(32).toString("hex");
-
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-
-  return { resetToken, hashedToken };
-};
-
-
 
 /* ===================== REGISTER ===================== */
 
@@ -54,7 +30,9 @@ export const registerUser = catchAsync(async (req, res, next) => {
   });
 
   if (exists) {
-    return next(new AppError("User already exists", 400));
+    return next(
+      new AppError("User already exists", 400, "USER_EXISTS")
+    );
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -73,52 +51,38 @@ export const registerUser = catchAsync(async (req, res, next) => {
 
 /* ===================== LOGIN (USER) ===================== */
 
-export const loginUser = catchAsync(async (req, res, next) => {
+export const loginUser = catchAsync(async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user) {
-    return next(new AppError("Invalid credentials", 401));
-  }
-
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return next(new AppError("Invalid credentials", 401));
-  }
-
-  const token = signToken({ id: user._id });
+  const { user, token } = await loginUserService({
+    email,
+    password,
+  });
 
   sendTokenCookie(res, token);
 
   res.status(200).json({
     success: true,
-    user: {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      profilepic: user.profilepic,
+    data: {
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        profilepic: user.profilepic,
+      },
     },
   });
 });
 
 /* ===================== LOGIN (ADMIN) ===================== */
 
-export const loginAdmin = catchAsync(async (req, res, next) => {
+export const loginAdmin = catchAsync(async (req, res) => {
   const { email, password } = req.body;
 
-  const admin = await User.findOne({ email, role: "admin" });
-  if (!admin) {
-    return next(new AppError("Invalid credentials", 401));
-  }
-
-  const isMatch = await bcrypt.compare(password, admin.password);
-  if (!isMatch) {
-    return next(new AppError("Invalid credentials", 401));
-  }
-
-  const token = signToken({
-    id: admin._id,
+  const { user, token } = await loginUserService({
+    email,
+    password,
     role: "admin",
   });
 
@@ -126,11 +90,13 @@ export const loginAdmin = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    user: {
-      _id: admin._id,
-      username: admin.username,
-      email: admin.email,
-      role: admin.role,
+    data: {
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
     },
   });
 });
@@ -151,10 +117,9 @@ export const logoutUser = (req, res) => {
 export const getMe = (req, res) => {
   res.status(200).json({
     success: true,
-    user: req.user,
+    data: { user: req.user },
   });
 };
-
 
 /* ===================== FORGOT PASSWORD ===================== */
 
@@ -163,30 +128,29 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
 
   const user = await User.findOne({ email });
   if (!user) {
-    return next(new AppError("User not found", 404));
+    return next(
+      new AppError("User not found", 404, "USER_NOT_FOUND")
+    );
   }
 
-  // Generate token
   const resetToken = crypto.randomBytes(32).toString("hex");
 
-  // Hash token
   user.resetPasswordToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
 
-  user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 min
+  user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
 
   await user.save({ validateBeforeSave: false });
 
-  // DEV ONLY: send token in response
+  // DEV ONLY
   res.status(200).json({
     success: true,
     message: "Password reset token generated",
-    resetToken, // ⛔ REMOVE in production
+    resetToken,
   });
 });
-
 
 /* ===================== RESET PASSWORD ===================== */
 
@@ -205,13 +169,16 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   });
 
   if (!user) {
-    return next(new AppError("Token is invalid or expired", 400));
+    return next(
+      new AppError(
+        "Token is invalid or expired",
+        400,
+        "INVALID_RESET_TOKEN"
+      )
+    );
   }
 
-  // Hash new password
   user.password = await bcrypt.hash(password, 10);
-
-  // Clear reset fields
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
 
@@ -222,4 +189,3 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     message: "Password reset successful",
   });
 });
-

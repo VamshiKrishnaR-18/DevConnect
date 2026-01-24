@@ -1,12 +1,17 @@
-import AppError from '../utils/AppError.js';
+import AppError from "../utils/AppError.js";
 
 const errorHandler = (err, req, res, next) => {
-  let error = { ...err };
-  error.message = err.message;
+  let error = err;
 
-  // Mongoose bad ObjectId
-  if (err.name === 'CastError') {
-    error = new AppError('Invalid ID format', 400);
+  /* ===================== MONGOOSE ERRORS ===================== */
+
+  // Invalid ObjectId
+  if (err.name === "CastError") {
+    error = new AppError(
+      "Invalid ID format",
+      400,
+      "INVALID_ID"
+    );
   }
 
   // Duplicate key error
@@ -14,23 +19,39 @@ const errorHandler = (err, req, res, next) => {
     const field = Object.keys(err.keyValue)[0];
     error = new AppError(
       `Duplicate value for field: ${field}`,
-      400
+      400,
+      "DUPLICATE_FIELD"
     );
   }
 
-  // JWT errors
-  if (err.name === 'JsonWebTokenError') {
-    error = new AppError('Invalid token, please login again', 401);
+  /* ===================== JWT ERRORS ===================== */
+
+  if (err.name === "JsonWebTokenError") {
+    error = new AppError(
+      "Invalid token, please login again",
+      401,
+      "INVALID_TOKEN"
+    );
   }
 
-  if (err.name === 'TokenExpiredError') {
-    error = new AppError('Token expired, please login again', 401);
+  if (err.name === "TokenExpiredError") {
+    error = new AppError(
+      "Token expired, please login again",
+      401,
+      "TOKEN_EXPIRED"
+    );
   }
 
-  res.status(error.statusCode || 500).json({
+  /* ===================== DEFAULT ===================== */
+
+  const statusCode = error.statusCode || 500;
+
+  res.status(statusCode).json({
     success: false,
-    status: error.status || 'error',
-    message: error.message || 'Internal Server Error',
+    error: {
+      message: error.message || "Internal Server Error",
+      code: error.code || null,
+    },
   });
 };
 

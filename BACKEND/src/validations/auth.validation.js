@@ -11,7 +11,6 @@ export const registerSchema = z.object({
   }),
 });
 
-// 🔥 OpenAPI schema (derived from body)
 registry.register(
   "RegisterRequest",
   registerSchema.shape.body
@@ -29,4 +28,33 @@ export const loginSchema = z.object({
 registry.register(
   "LoginRequest",
   loginSchema.shape.body
+);
+
+/* ===================== FORGOT PASSWORD ===================== */
+
+export const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email("Invalid email format"),
+  }),
+});
+
+registry.register(
+  "ForgotPasswordRequest",
+  forgotPasswordSchema.shape.body
+);
+
+/* ===================== RESET PASSWORD ===================== */
+
+export const resetPasswordSchema = z.object({
+  params: z.object({
+    token: z.string().min(32, "Invalid reset token"),
+  }),
+  body: z.object({
+    password: z.string().min(6, "Password must be at least 6 characters"),
+  }),
+});
+
+registry.register(
+  "ResetPasswordRequest",
+  resetPasswordSchema.shape.body
 );

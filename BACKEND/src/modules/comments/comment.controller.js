@@ -1,38 +1,39 @@
 import mongoose from "mongoose";
+
 import Comment from "../../models/Comment.model.js";
 import AppError from "../../utils/AppError.js";
 import catchAsync from "../../utils/catchAsync.js";
 
+import {
+  addCommentService,
+  deleteCommentService,
+} from "../../services/comment.service.js";
+
+import { SOCKET_EVENTS } from "../../constants/socketEvents.js";
+import { emitSocketEvent } from "../../utils/emitSocketEvent.js";
+
 /* ===================== ADD COMMENT ===================== */
 
-export const addComment = catchAsync(async (req, res, next) => {
-  const { postId, text } = req.body;
-
-  if (!mongoose.Types.ObjectId.isValid(postId)) {
-    return next(new AppError("Invalid postId", 400));
-  }
-
-  if (!text || !text.trim()) {
-    return next(new AppError("Comment text is required", 400));
-  }
-
-  const comment = await Comment.create({
-    postId,
+export const addComment = catchAsync(async (req, res) => {
+  const result = await addCommentService({
+    postId: req.body.postId,
     userId: req.user._id,
-    text: text.trim(),
+    text: req.body.text,
   });
 
-  await comment.populate("userId", "username profilepic");
-
   const io = req.app.get("io");
-  if (io) {
-    io.emit("newComment", { postId, comment });
+  if (result.events) {
+    result.events.forEach((event) => {
+      emitSocketEvent(io, event.type, event.payload);
+    });
   }
 
   res.status(201).json({
     success: true,
+    data: {
+      comment: result.comment,
+    },
     message: "Comment added successfully",
-    comment,
   });
 });
 
@@ -42,7 +43,9 @@ export const getComments = catchAsync(async (req, res, next) => {
   const { postId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(postId)) {
-    return next(new AppError("Invalid postId", 400));
+    return next(
+      new AppError("Invalid postId", 400, "INVALID_POST_ID")
+    );
   }
 
   const comments = await Comment.find({ postId })
@@ -51,29 +54,17 @@ export const getComments = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    comments,
+    data: { comments },
   });
 });
 
 /* ===================== DELETE COMMENT ===================== */
 
-export const deleteComment = catchAsync(async (req, res, next) => {
-  const { commentId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(commentId)) {
-    return next(new AppError("Invalid commentId", 400));
-  }
-
-  const comment = await Comment.findById(commentId);
-  if (!comment) {
-    return next(new AppError("Comment not found", 404));
-  }
-
-  if (comment.userId.toString() !== req.user._id.toString()) {
-    return next(new AppError("You can only delete your own comments", 403));
-  }
-
-  await Comment.findByIdAndDelete(commentId);
+export const deleteComment = catchAsync(async (req, res) => {
+  await deleteCommentService({
+    commentId: req.params.commentId,
+    userId: req.user._id,
+  });
 
   res.status(200).json({
     success: true,

@@ -19,3 +19,9 @@ export const followUserSchema = z.object({
     id: objectId,
   }),
 });
+
+/* ===================== UPDATE PROFILE PIC ===================== */
+export const updateProfilePicSchema = z.object({
+  file: z.any(),
+});
+

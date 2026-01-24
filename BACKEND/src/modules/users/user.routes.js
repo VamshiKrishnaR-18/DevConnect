@@ -14,6 +14,7 @@ import { profileUpload } from "../../middlewares/profileUpload.middleware.js";
 import {
   getProfileSchema,
   followUserSchema,
+  updateProfilePicSchema,
 } from "../../validations/user.validation.js";
 
 const router = express.Router();
@@ -46,6 +47,7 @@ router.put(
   "/profile-pic",
   authMiddleware,
   profileUpload.single("profilepic"),
+  validate(updateProfilePicSchema),
   updateProfilePic
 );
 
