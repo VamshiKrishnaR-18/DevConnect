@@ -41,7 +41,7 @@ function Feed() {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/api/posts");
+      const res = await api.get("/posts");
 
       const uniquePosts = Array.from(
         new Map((res.data.posts || []).map((p) => [p._id, p])).values()
@@ -135,7 +135,7 @@ function Feed() {
         formData.append("content", newPost);
         selectedMedia.forEach((file) => formData.append("media", file));
 
-        res = await api.post("/api/posts/with-media", formData, {
+        res = await api.post("/posts/with-media", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {

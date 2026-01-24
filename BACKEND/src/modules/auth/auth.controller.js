@@ -6,6 +6,8 @@ import User from "../../models/User.model.js";
 import AppError from "../../utils/AppError.js";
 import catchAsync from "../../utils/catchAsync.js";
 
+import crypto from "crypto";
+
 /* ===================== HELPERS ===================== */
 
 const signToken = (payload) => {
@@ -19,15 +21,27 @@ const signToken = (payload) => {
 };
 
 const sendTokenCookie = (res, token) => {
-  const isProd = process.env.NODE_ENV === "production";
-
   res.cookie("token", token, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? "none" : "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  httpOnly: true,
+  secure: false,
+  sameSite: "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
+
 };
+
+
+const generateResetToken = () => {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  return { resetToken, hashedToken };
+};
+
 
 
 /* ===================== REGISTER ===================== */
@@ -140,3 +154,72 @@ export const getMe = (req, res) => {
     user: req.user,
   });
 };
+
+
+/* ===================== FORGOT PASSWORD ===================== */
+
+export const forgotPassword = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return next(new AppError("User not found", 404));
+  }
+
+  // Generate token
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  // Hash token
+  user.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 min
+
+  await user.save({ validateBeforeSave: false });
+
+  // DEV ONLY: send token in response
+  res.status(200).json({
+    success: true,
+    message: "Password reset token generated",
+    resetToken, // ⛔ REMOVE in production
+  });
+});
+
+
+/* ===================== RESET PASSWORD ===================== */
+
+export const resetPassword = catchAsync(async (req, res, next) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new AppError("Token is invalid or expired", 400));
+  }
+
+  // Hash new password
+  user.password = await bcrypt.hash(password, 10);
+
+  // Clear reset fields
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Password reset successful",
+  });
+});
+

@@ -1,10 +1,25 @@
 import axios from "axios";
-import config from "../config/environment";
 
 const api = axios.create({
-  baseURL: config.API_BASE_URL,
+  baseURL: "http://localhost:3000/api",
   withCredentials: true,
-  timeout: 30000,
 });
+
+// Silence expected 401 for auth check
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isAuthMe =
+      error.config?.url?.includes("/api/auth/me") &&
+      error.response?.status === 401;
+
+    if (isAuthMe) {
+      return Promise.reject(error); // silent
+    }
+
+    console.error("API Error:", error);
+    return Promise.reject(error);
+  }
+);
 
 export default api;

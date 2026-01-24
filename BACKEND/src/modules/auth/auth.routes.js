@@ -7,7 +7,10 @@ import {
   loginAdmin,
   logoutUser,
   getMe,
+  forgotPassword,
+  resetPassword,
 } from "./auth.controller.js";
+
 
 import validate from "../../middlewares/validate.middleware.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
@@ -36,5 +39,15 @@ router.get("/me", authMiddleware, getMe);
 
 // Logout
 router.post("/logout", authMiddleware, logoutUser);
+
+
+/* ===================== ADMIN ===================== */
+
+// Forgot password
+
+router.post("/forgot-password", forgotPassword);
+
+router.post("/reset-password/:token", resetPassword);
+
 
 export default router;

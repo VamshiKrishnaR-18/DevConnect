@@ -1,5 +1,5 @@
-import User from "../../models/User.model.js";
-import Post from "../../models/Post.model.js";
+import userModel from "../../models/User.model.js";
+import postModel from "../../models/Post.model.js";
 
 import AppError from "../../utils/AppError.js";
 import catchAsync from "../../utils/catchAsync.js";
@@ -133,9 +133,8 @@ export const updateProfilePic = catchAsync(async (req, res, next) => {
     return next(new AppError("User not found", 404));
   }
 
-  const profilePicUrl = req.file.path?.startsWith("http")
-    ? req.file.path
-    : `/uploads/${req.file.filename}`;
+  //  Always point to correct public path
+  const profilePicUrl = `/uploads/profile/${req.file.filename}`;
 
   user.profilepic = profilePicUrl;
   await user.save();

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import api from "../utils/api"; // ✅ FIXED IMPORT
+import api from "../utils/api";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -101,6 +101,7 @@ function Register() {
               name="email"
               type="email"
               placeholder="Email"
+              autoComplete="username"
               value={formData.email}
               onChange={handleChange}
               className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -111,6 +112,7 @@ function Register() {
               name="password"
               type="password"
               placeholder="Password"
+              autoComplete="current-password"
               value={formData.password}
               onChange={handleChange}
               className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700"

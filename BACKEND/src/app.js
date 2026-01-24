@@ -13,18 +13,20 @@ const app = express();
 
 /* ===================== GLOBAL MIDDLEWARES ===================== */
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // frontend
+    credentials: true,               // allow cookies
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
 
-/* ===================== IMPORT DOCS (IMPORTANT) ===================== */
-// These imports register OpenAPI paths via the registry
+/* ===================== IMPORT DOCS ===================== */
 import "./modules/auth/auth.docs.js";
 import "./modules/posts/posts.docs.js";
 import "./modules/comments/comments.docs.js";
-// import "./modules/users/users.docs.js"; // if you add later
-// import "./modules/admin/admin.docs.js"; // if you add later
 
 /* ===================== SWAGGER ===================== */
 

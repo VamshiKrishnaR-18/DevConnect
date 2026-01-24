@@ -43,7 +43,7 @@ router.put(
 );
 
 router.put(
-  "/profilepic",
+  "/profile-pic",
   authMiddleware,
   profileUpload.single("profilepic"),
   updateProfilePic
