@@ -1,7 +1,8 @@
-// src/services/comment.service.js
 import mongoose from "mongoose";
 import Comment from "../models/Comment.model.js";
+import Post from "../models/Post.model.js";
 import AppError from "../utils/AppError.js";
+import { createNotification } from "./notification.service.js";
 
 /* ===================== ADD COMMENT ===================== */
 
@@ -22,6 +23,15 @@ export const addCommentService = async ({ postId, userId, text }) => {
     );
   }
 
+  const post = await Post.findById(postId);
+  if (!post) {
+    throw new AppError(
+      "Post not found",
+      404,
+      "POST_NOT_FOUND"
+    );
+  }
+
   const comment = await Comment.create({
     postId,
     userId,
@@ -29,6 +39,17 @@ export const addCommentService = async ({ postId, userId, text }) => {
   });
 
   await comment.populate("userId", "username profilepic");
+
+  // 🔔 Create notification ONLY if not self-comment
+  if (!post.user.equals(userId)) {
+    await createNotification({
+      recipient: post.user,
+      sender: userId,
+      type: "COMMENT",
+      post: postId,
+      message: "commented on your post",
+    });
+  }
 
   return {
     comment,

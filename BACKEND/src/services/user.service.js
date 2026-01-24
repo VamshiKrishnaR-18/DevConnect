@@ -1,6 +1,7 @@
 // src/services/user.service.js
 import userModel from "../models/User.model.js";
 import AppError from "../utils/AppError.js";
+import { createNotification } from "./notification.service.js";
 
 /* ===================== FOLLOW USER ===================== */
 
@@ -9,11 +10,7 @@ export const followUserService = async ({
   targetUserId,
 }) => {
   if (currentUserId.equals(targetUserId)) {
-    throw new AppError(
-      "You cannot follow yourself",
-      400,
-      "SELF_FOLLOW"
-    );
+    throw new AppError("You cannot follow yourself", 400, "SELF_FOLLOW");
   }
 
   const [currentUser, targetUser] = await Promise.all([
@@ -33,7 +30,6 @@ export const followUserService = async ({
     );
   }
 
-  // Atomic updates
   await Promise.all([
     userModel.updateOne(
       { _id: targetUserId },
@@ -44,6 +40,14 @@ export const followUserService = async ({
       { $addToSet: { following: targetUserId } }
     ),
   ]);
+
+  // 🔔 Persistent notification
+  await createNotification({
+    recipient: targetUserId,
+    sender: currentUserId,
+    type: "FOLLOW",
+    message: "started following you",
+  });
 
   const followersCount = targetUser.followers.length + 1;
 
@@ -63,6 +67,7 @@ export const followUserService = async ({
     ],
   };
 };
+
 
 /* ===================== UNFOLLOW USER ===================== */
 

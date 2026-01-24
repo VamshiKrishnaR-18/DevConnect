@@ -1,22 +1,28 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 
 import User from "../../models/User.model.js";
 import AppError from "../../utils/AppError.js";
 import catchAsync from "../../utils/catchAsync.js";
 
-import {
-  loginUserService,
-} from "../../services/auth.service.js";
+import { loginUserService } from "../../services/auth.service.js";
 
 /* ===================== COOKIE HELPER ===================== */
 
-const sendTokenCookie = (res, token) => {
-  res.cookie("token", token, {
+const sendAuthCookies = (res, accessToken, refreshToken) => {
+  res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 15 * 60 * 1000, // 15 minutes
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 };
 
@@ -54,12 +60,10 @@ export const registerUser = catchAsync(async (req, res, next) => {
 export const loginUser = catchAsync(async (req, res) => {
   const { email, password } = req.body;
 
-  const { user, token } = await loginUserService({
-    email,
-    password,
-  });
+  const { user, accessToken, refreshToken } =
+    await loginUserService({ email, password });
 
-  sendTokenCookie(res, token);
+  sendAuthCookies(res, accessToken, refreshToken);
 
   res.status(200).json({
     success: true,
@@ -80,13 +84,14 @@ export const loginUser = catchAsync(async (req, res) => {
 export const loginAdmin = catchAsync(async (req, res) => {
   const { email, password } = req.body;
 
-  const { user, token } = await loginUserService({
-    email,
-    password,
-    role: "admin",
-  });
+  const { user, accessToken, refreshToken } =
+    await loginUserService({
+      email,
+      password,
+      role: "admin",
+    });
 
-  sendTokenCookie(res, token);
+  sendAuthCookies(res, accessToken, refreshToken);
 
   res.status(200).json({
     success: true,
@@ -101,23 +106,96 @@ export const loginAdmin = catchAsync(async (req, res) => {
   });
 });
 
+/* ===================== REFRESH ACCESS TOKEN ===================== */
+
+export const refreshAccessToken = catchAsync(async (req, res, next) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return next(
+      new AppError("Refresh token missing", 401, "NO_REFRESH_TOKEN")
+    );
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET
+    );
+  } catch {
+    return next(
+      new AppError("Invalid refresh token", 401, "INVALID_REFRESH_TOKEN")
+    );
+  }
+
+  const user = await User.findById(decoded.id).select(
+    "+refreshToken +refreshTokenExpiresAt"
+  );
+
+  if (
+    !user ||
+    user.refreshToken !== refreshToken ||
+    user.refreshTokenExpiresAt < Date.now()
+  ) {
+    return next(
+      new AppError("Session expired", 401, "SESSION_EXPIRED")
+    );
+  }
+
+  const newAccessToken = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "15m" }
+  );
+
+  const newRefreshToken = jwt.sign(
+    { id: user._id },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  user.refreshToken = newRefreshToken;
+  user.refreshTokenExpiresAt =
+    Date.now() + 7 * 24 * 60 * 60 * 1000;
+
+  await user.save({ validateBeforeSave: false });
+
+  sendAuthCookies(res, newAccessToken, newRefreshToken);
+
+  res.status(200).json({
+    success: true,
+    message: "Token refreshed",
+  });
+});
+
 /* ===================== LOGOUT ===================== */
 
-export const logoutUser = (req, res) => {
-  res.clearCookie("token");
+export const logoutUser = catchAsync(async (req, res) => {
+  if (req.user) {
+    await User.findByIdAndUpdate(req.user._id, {
+      refreshToken: null,
+      refreshTokenExpiresAt: null,
+    });
+  }
+
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
 
   res.status(200).json({
     success: true,
     message: "Logged out successfully",
   });
-};
+});
 
 /* ===================== GET CURRENT USER ===================== */
 
 export const getMe = (req, res) => {
   res.status(200).json({
     success: true,
-    data: { user: req.user },
+    data: {
+      user: req.user,
+    },
   });
 };
 

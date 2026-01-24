@@ -51,7 +51,7 @@ const userSchema = mongoose.Schema(
       {
         type: String,
         validate: {
-          validator: function(v) {
+          validator: function (v) {
             return /^https?:\/\/.+/.test(v);
           },
           message: "Links must be valid URLs starting with http:// or https://",
@@ -63,17 +63,20 @@ const userSchema = mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
-    resetPasswordToken: String,
-    resetPasswordExpire: Date,
-
+    refreshToken: {
+      type: String,
+      select: false,
+    },
+    refreshTokenExpiresAt: {
+      type: Date,
+      select: false,
+    },
   },
   {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
-  }
+    toObject: { virtuals: true },
+  },
 );
-
-
 
 export default mongoose.model("User", userSchema);

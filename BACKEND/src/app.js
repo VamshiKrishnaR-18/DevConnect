@@ -43,12 +43,18 @@ import userRoutes from "./modules/users/user.routes.js";
 import postRoutes from "./modules/posts/post.routes.js";
 import commentRoutes from "./modules/comments/comment.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
+import notificationRoutes from "./modules/notifications/notification.routes.js";
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/admin", adminRoutes);
+app.use(
+  "/api/notifications",
+  notificationRoutes
+);
+
 
 /* ===================== ERROR HANDLER ===================== */
 

@@ -5,9 +5,14 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.model.js";
 import AppError from "../utils/AppError.js";
 
-/* ===================== TOKEN HELPER ===================== */
+/* ===================== CONSTANTS ===================== */
 
-const signToken = (payload) => {
+const ACCESS_TOKEN_EXPIRY = "15m";
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+
+/* ===================== TOKEN HELPERS ===================== */
+
+const signAccessToken = (payload) => {
   if (!process.env.JWT_SECRET) {
     throw new AppError(
       "JWT secret not configured",
@@ -17,7 +22,21 @@ const signToken = (payload) => {
   }
 
   return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: "7d",
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
+};
+
+const signRefreshToken = (payload) => {
+  if (!process.env.JWT_REFRESH_SECRET) {
+    throw new AppError(
+      "JWT refresh secret not configured",
+      500,
+      "JWT_REFRESH_SECRET_MISSING"
+    );
+  }
+
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: `${REFRESH_TOKEN_EXPIRY_DAYS}d`,
   });
 };
 
@@ -57,11 +76,24 @@ export const loginUserService = async ({
     );
   }
 
-  const tokenPayload = role
-    ? { id: user._id, role }
-    : { id: user._id };
+  const accessToken = signAccessToken({
+    id: user._id,
+    role: user.role,
+  });
 
-  const token = signToken(tokenPayload);
+  const refreshToken = signRefreshToken({
+    id: user._id,
+  });
 
-  return { user, token };
+  user.refreshToken = refreshToken;
+  user.refreshTokenExpiresAt =
+    Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+
+  await user.save({ validateBeforeSave: false });
+
+  return {
+    user,
+    accessToken,
+    refreshToken,
+  };
 };
