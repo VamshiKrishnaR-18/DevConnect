@@ -2,8 +2,8 @@ import express from "express";
 
 import likeRoutes from "./like.routes.js";
 import {
-  createPost,
-  createPostWithMedia,
+  createTextPost,
+  createMediaPost,
   getAllPosts,
   deletePost,
 } from "./post.controller.js";
@@ -39,7 +39,7 @@ router.post(
   "/",
   authMiddleware,
   validate(createPostSchema),
-  createPost
+  createTextPost
 );
 
 // Create post with media
@@ -48,7 +48,7 @@ router.post(
   authMiddleware,
   mediaUpload.array("media", 5),
   validate(createPostWithMediaSchema),
-  createPostWithMedia
+  createMediaPost
 );
 
 // Delete post

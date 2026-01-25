@@ -7,18 +7,31 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchUser = async () => {
       try {
         const res = await api.get("/auth/me");
-        setUser(res.data.user);
-      } catch {
-        setUser(null);
+        if (isMounted) setUser(res.data.data.user);
+      } catch (err) {
+        if (err.response?.status === 401) {
+          try {
+            await api.post("/auth/refresh");
+            const res = await api.get("/auth/me");
+            if (isMounted) setUser(res.data.data.user);
+          } catch {
+            if (isMounted) setUser(null);
+          }
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchUser();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = (userData) => setUser(userData);
@@ -26,8 +39,8 @@ const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await api.post("/auth/logout");
-    } catch {
-    setUser(null);
+    } finally {
+      setUser(null);
     }
   };
 

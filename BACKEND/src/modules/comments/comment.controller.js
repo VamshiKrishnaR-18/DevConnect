@@ -1,5 +1,3 @@
-import mongoose from "mongoose";
-
 import Comment from "../../models/Comment.model.js";
 import AppError from "../../utils/AppError.js";
 import catchAsync from "../../utils/catchAsync.js";
@@ -9,7 +7,6 @@ import {
   deleteCommentService,
 } from "../../services/comment.service.js";
 
-import { SOCKET_EVENTS } from "../../constants/socketEvents.js";
 import { emitSocketEvent } from "../../utils/emitSocketEvent.js";
 
 /* ===================== ADD COMMENT ===================== */
@@ -22,33 +19,25 @@ export const addComment = catchAsync(async (req, res) => {
   });
 
   const io = req.app.get("io");
-  if (result.events) {
-    result.events.forEach((event) => {
-      emitSocketEvent(io, event.type, event.payload);
-    });
+  if (io && result.events?.length) {
+    result.events.forEach((event) =>
+      emitSocketEvent(io, event.type, event.payload)
+    );
   }
 
   res.status(201).json({
     success: true,
-    data: {
-      comment: result.comment,
-    },
     message: "Comment added successfully",
+    data: { comment: result.comment },
   });
 });
 
 /* ===================== GET COMMENTS ===================== */
 
-export const getComments = catchAsync(async (req, res, next) => {
-  const { postId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(postId)) {
-    return next(
-      new AppError("Invalid postId", 400, "INVALID_POST_ID")
-    );
-  }
-
-  const comments = await Comment.find({ postId })
+export const getComments = catchAsync(async (req, res) => {
+  const comments = await Comment.find({
+    postId: req.params.postId,
+  })
     .populate("userId", "username profilepic")
     .sort({ createdAt: -1 });
 
@@ -65,6 +54,13 @@ export const deleteComment = catchAsync(async (req, res) => {
     commentId: req.params.commentId,
     userId: req.user._id,
   });
+
+  const io = req.app.get("io");
+  if (io) {
+    emitSocketEvent(io, "commentDeleted", {
+      commentId: req.params.commentId,
+    });
+  }
 
   res.status(200).json({
     success: true,

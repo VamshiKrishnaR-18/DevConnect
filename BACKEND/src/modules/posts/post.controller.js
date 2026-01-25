@@ -2,12 +2,7 @@ import postModel from "../../models/Post.model.js";
 import AppError from "../../utils/AppError.js";
 import catchAsync from "../../utils/catchAsync.js";
 
-import {
-  createPost,
-  createPostWithMedia,
-  toggleLikeService,
-  deletePostService,
-} from "../../services/post.service.js";
+import {createPost} from "../../services/post.service.js";
 
 import { SOCKET_EVENTS } from "../../constants/socketEvents.js";
 import { emitSocketEvent } from "../../utils/emitSocketEvent.js";

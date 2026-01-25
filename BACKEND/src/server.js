@@ -29,10 +29,17 @@ app.set("io", io);
 io.on("connection", (socket) => {
   console.log("🔌 Socket connected:", socket.id);
 
+  socket.on("join", (userId) => {
+    if (!userId) return;
+    socket.join(`user:${userId}`);
+    console.log(`👤 User ${userId} joined room`);
+  });
+
   socket.on("disconnect", () => {
     console.log("❌ Socket disconnected:", socket.id);
   });
 });
+
 
 /* ===================== START SERVER ===================== */
 server.listen(PORT, () => {

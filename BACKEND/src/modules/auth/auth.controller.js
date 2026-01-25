@@ -7,15 +7,19 @@ import AppError from "../../utils/AppError.js";
 import catchAsync from "../../utils/catchAsync.js";
 
 import { loginUserService } from "../../services/auth.service.js";
+import {
+  signAccessToken,
+  signRefreshToken,
+} from "../../utils/token.js";
 
-/* ===================== COOKIE HELPER ===================== */
+/* ===================== COOKIE HELPERS ===================== */
 
 const sendAuthCookies = (res, accessToken, refreshToken) => {
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 15 * 60 * 1000, // 15 minutes
+    maxAge: 15 * 60 * 1000, // 15 min
   });
 
   res.cookie("refreshToken", refreshToken, {
@@ -109,7 +113,7 @@ export const loginAdmin = catchAsync(async (req, res) => {
 /* ===================== REFRESH ACCESS TOKEN ===================== */
 
 export const refreshAccessToken = catchAsync(async (req, res, next) => {
-  const refreshToken = req.cookies.refreshToken;
+  const refreshToken = req.cookies?.refreshToken;
 
   if (!refreshToken) {
     return next(
@@ -125,7 +129,11 @@ export const refreshAccessToken = catchAsync(async (req, res, next) => {
     );
   } catch {
     return next(
-      new AppError("Invalid refresh token", 401, "INVALID_REFRESH_TOKEN")
+      new AppError(
+        "Invalid refresh token",
+        401,
+        "INVALID_REFRESH_TOKEN"
+      )
     );
   }
 
@@ -143,17 +151,14 @@ export const refreshAccessToken = catchAsync(async (req, res, next) => {
     );
   }
 
-  const newAccessToken = jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "15m" }
-  );
+  const newAccessToken = signAccessToken({
+    id: user._id,
+    role: user.role,
+  });
 
-  const newRefreshToken = jwt.sign(
-    { id: user._id },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "7d" }
-  );
+  const newRefreshToken = signRefreshToken({
+    id: user._id,
+  });
 
   user.refreshToken = newRefreshToken;
   user.refreshTokenExpiresAt =
@@ -172,11 +177,13 @@ export const refreshAccessToken = catchAsync(async (req, res, next) => {
 /* ===================== LOGOUT ===================== */
 
 export const logoutUser = catchAsync(async (req, res) => {
-  if (req.user) {
-    await User.findByIdAndUpdate(req.user._id, {
-      refreshToken: null,
-      refreshTokenExpiresAt: null,
-    });
+  const refreshToken = req.cookies?.refreshToken;
+
+  if (refreshToken) {
+    await User.updateOne(
+      { refreshToken },
+      { $unset: { refreshToken: 1, refreshTokenExpiresAt: 1 } }
+    );
   }
 
   res.clearCookie("accessToken");

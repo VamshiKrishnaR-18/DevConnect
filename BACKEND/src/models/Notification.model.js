@@ -6,7 +6,6 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
     sender: {
       type: mongoose.Schema.Types.ObjectId,
@@ -14,11 +13,7 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: [
-        "FOLLOW",
-        "LIKE",
-        "COMMENT",
-      ],
+      enum: ["FOLLOW", "COMMENT", "LIKE"],
       required: true,
     },
     post: {
@@ -37,7 +32,4 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model(
-  "Notification",
-  notificationSchema
-);
+export default mongoose.model("Notification", notificationSchema);

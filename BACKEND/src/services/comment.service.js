@@ -1,12 +1,15 @@
 import mongoose from "mongoose";
+
 import Comment from "../models/Comment.model.js";
 import Post from "../models/Post.model.js";
+
 import AppError from "../utils/AppError.js";
 import { createNotification } from "./notification.service.js";
 
 /* ===================== ADD COMMENT ===================== */
 
 export const addCommentService = async ({ postId, userId, text }) => {
+  // Validate postId
   if (!mongoose.Types.ObjectId.isValid(postId)) {
     throw new AppError(
       "Invalid postId",
@@ -15,6 +18,7 @@ export const addCommentService = async ({ postId, userId, text }) => {
     );
   }
 
+  // Validate text
   if (!text || !text.trim()) {
     throw new AppError(
       "Comment text is required",
@@ -23,6 +27,7 @@ export const addCommentService = async ({ postId, userId, text }) => {
     );
   }
 
+  // Ensure post exists
   const post = await Post.findById(postId);
   if (!post) {
     throw new AppError(
@@ -32,16 +37,18 @@ export const addCommentService = async ({ postId, userId, text }) => {
     );
   }
 
+  // Create comment
   const comment = await Comment.create({
     postId,
     userId,
     text: text.trim(),
   });
 
+  // Populate user info
   await comment.populate("userId", "username profilepic");
 
-  // 🔔 Create notification ONLY if not self-comment
-  if (!post.user.equals(userId)) {
+  // 🔔 Create notification (avoid self-comment notification)
+  if (post.user.toString() !== userId.toString()) {
     await createNotification({
       recipient: post.user,
       sender: userId,
@@ -68,6 +75,7 @@ export const addCommentService = async ({ postId, userId, text }) => {
 /* ===================== DELETE COMMENT ===================== */
 
 export const deleteCommentService = async ({ commentId, userId }) => {
+  // Validate commentId
   if (!mongoose.Types.ObjectId.isValid(commentId)) {
     throw new AppError(
       "Invalid commentId",
@@ -85,7 +93,8 @@ export const deleteCommentService = async ({ commentId, userId }) => {
     );
   }
 
-  if (!comment.userId.equals(userId)) {
+  // Ownership check
+  if (comment.userId.toString() !== userId.toString()) {
     throw new AppError(
       "You can only delete your own comments",
       403,
@@ -95,5 +104,7 @@ export const deleteCommentService = async ({ commentId, userId }) => {
 
   await Comment.deleteOne({ _id: commentId });
 
-  return { commentId };
+  return {
+    commentId,
+  };
 };
