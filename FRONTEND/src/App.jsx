@@ -9,6 +9,7 @@ import Profile from "./pages/UserProfile.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import AdminLogin from "./pages/AdminLogin.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import Notifications from "./pages/Notifications";
 
 import ProtectedRoute, {
   AdminProtectedRoute,
@@ -16,24 +17,28 @@ import ProtectedRoute, {
 
 import { DarkModeProvider } from "./contexts/DarkModeContext.jsx";
 import AuthProvider from "./contexts/AuthProvider.jsx";
-import { SocketProvider } from "./contexts/SocketContext.jsx";
+import { SocketProvider } from "./contexts/SocketProvider.jsx";
 import { NotificationProvider } from "./contexts/NotificationProvider.jsx";
 
 function App() {
   return (
     <DarkModeProvider>
-      <SocketProvider>
-        <AuthProvider>
+      {/* 1. AuthProvider MUST be the top-level data provider */}
+      <AuthProvider>
+        {/* 2. SocketProvider is inside, so it can read 'user' from Auth */}
+        <SocketProvider>
+          {/* 3. NotificationProvider is inside, so it can read 'socket' */}
           <NotificationProvider>
+            
             <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
               <BrowserRouter>
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<Login />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password/:token" element={<ResetPassword />} />
-
 
                   {/* Protected user routes */}
                   <Route
@@ -50,6 +55,15 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/notifications"
+                    element={
+                      <ProtectedRoute>
+                        <Notifications />
                       </ProtectedRoute>
                     }
                   />
@@ -71,13 +85,12 @@ function App() {
                 </Routes>
               </BrowserRouter>
             </div>
+
           </NotificationProvider>
-        </AuthProvider>
-      </SocketProvider>
+        </SocketProvider>
+      </AuthProvider>
     </DarkModeProvider>
   );
 }
 
 export default App;
-
-

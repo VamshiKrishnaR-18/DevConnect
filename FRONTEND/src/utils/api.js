@@ -1,20 +1,24 @@
 import axios from "axios";
+import config from "../config/environment.js"; // Ensure you import config if used, or keep hardcoded if preferred
 
 const api = axios.create({
-  baseURL: "http://localhost:3000/api",
+  // Use the config URL or fallback to localhost
+  baseURL: config?.API_BASE_URL ? `${config.API_BASE_URL}/api` : "http://localhost:3000/api",
   withCredentials: true,
 });
 
-// Silence expected 401 for auth check
+// Silence expected 401 for auth checks
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const isAuthMe =
-      error.config?.url?.includes("/auth/me") &&
+    // FIX: Check for both /auth/me AND /auth/refresh
+    const isAuthCheck =
+      (error.config?.url?.includes("/auth/me") || 
+       error.config?.url?.includes("/auth/refresh")) &&
       error.response?.status === 401;
 
-    if (isAuthMe) {
-      // Not logged in — normal case
+    if (isAuthCheck) {
+      // Not logged in — normal case, don't log as error
       return Promise.reject(error);
     }
 

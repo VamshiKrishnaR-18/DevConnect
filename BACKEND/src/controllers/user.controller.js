@@ -1,19 +1,18 @@
-import userModel from "../../models/User.model.js";
-import postModel from "../../models/Post.model.js";
-
-import AppError from "../../utils/AppError.js";
-import catchAsync from "../../utils/catchAsync.js";
+import userModel from "../models/User.model.js";
+import postModel from "../models/Post.model.js";
+import AppError from "../utils/AppError.js";
+import catchAsync from "../utils/catchAsync.js";
 
 import {
   followUserService,
   unfollowUserService,
-} from "../../services/user.service.js";
+  updateProfilePicService, // <--- Import the new service
+} from "../services/user.service.js";
 
-import { SOCKET_EVENTS } from "../../constants/socketEvents.js";
-import { emitSocketEvent } from "../../utils/emitSocketEvent.js";
+import { SOCKET_EVENTS } from "../constants/socketEvents.js";
+import { emitSocketEvent } from "../utils/emitSocketEvent.js";
 
 /* ===================== GET PROFILE ===================== */
-
 export const getProfile = catchAsync(async (req, res, next) => {
   const { username } = req.params;
 
@@ -24,9 +23,7 @@ export const getProfile = catchAsync(async (req, res, next) => {
     .populate("following", "username profilePic");
 
   if (!user) {
-    return next(
-      new AppError("User not found", 404, "USER_NOT_FOUND")
-    );
+    return next(new AppError("User not found", 404, "USER_NOT_FOUND"));
   }
 
   const posts = await postModel
@@ -45,7 +42,6 @@ export const getProfile = catchAsync(async (req, res, next) => {
 });
 
 /* ===================== FOLLOW USER ===================== */
-
 export const followUser = catchAsync(async (req, res) => {
   const result = await followUserService({
     currentUserId: req.user._id,
@@ -69,7 +65,6 @@ export const followUser = catchAsync(async (req, res) => {
 });
 
 /* ===================== UNFOLLOW USER ===================== */
-
 export const unFollowUser = catchAsync(async (req, res) => {
   const result = await unfollowUserService({
     currentUserId: req.user._id,
@@ -93,37 +88,33 @@ export const unFollowUser = catchAsync(async (req, res) => {
 });
 
 /* ===================== UPDATE PROFILE PIC ===================== */
-
 export const updateProfilePic = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "No file uploaded",
-      });
+    console.log("--> CONTROLLER: Entering updateProfilePic");
+    console.log("--> CONTROLLER: User ID:", req.user ? req.user._id : "UNDEFINED");
+    
+    if (req.file) {
+      console.log("--> CONTROLLER: File received:", req.file.path);
+      console.log("--> CONTROLLER: Filename (publicId):", req.file.filename);
+    } else {
+      console.error("--> CONTROLLER ERROR: No file in req.file!");
     }
 
-    const user = await userModel.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+    const updatedUser = await updateProfilePicService(req.user._id, req.file);
 
-    user.profilePic = req.file.filename;
-    await user.save();
+    console.log("--> CONTROLLER: Service call successful");
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      profilePic: user.profilePic,
+      message: "Profile picture updated",
+      data: {
+        user: updatedUser,
+        profilePic: updatedUser.profilepic,
+      },
     });
   } catch (error) {
-    console.error("Profile pic upload error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to upload profile picture",
-    });
+    console.error("❌ CRITICAL ERROR IN CONTROLLER ❌");
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-

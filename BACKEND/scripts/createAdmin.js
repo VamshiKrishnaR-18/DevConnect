@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
-import userModel from "../models/userModel.js";
+import userModel from "../src/models/User.model.js";
 
 // Load environment variables
 dotenv.config();

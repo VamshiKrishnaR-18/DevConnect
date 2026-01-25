@@ -31,13 +31,21 @@ function Login() {
         password,
       });
 
-      // Backend sets cookie, frontend stores user
-      login(response.data.user);
-      navigate("/feed");
+      // FIX: Access response.data.data.user (Not response.data.user)
+      // The backend wraps the user object inside a "data" property
+      if (response.data.data && response.data.data.user) {
+        login(response.data.data.user);
+        navigate("/feed");
+      } else {
+        setError("Login failed: Invalid server response");
+      }
+      
     } catch (error) {
+      console.error("Login error:", error);
       setError(
+        error.response?.data?.message || // Check for 'message' property too
         error.response?.data?.msg ||
-          "Login failed. Please check your credentials."
+        "Login failed. Please check your credentials."
       );
     } finally {
       setLoading(false);

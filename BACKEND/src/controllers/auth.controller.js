@@ -2,15 +2,15 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 
-import User from "../../models/User.model.js";
-import AppError from "../../utils/AppError.js";
-import catchAsync from "../../utils/catchAsync.js";
+import User from "../models/User.model.js";
+import AppError from "../utils/AppError.js";
+import catchAsync from "../utils/catchAsync.js";
 
-import { loginUserService } from "../../services/auth.service.js";
+import { loginUserService } from "../services/auth.service.js"
 import {
   signAccessToken,
   signRefreshToken,
-} from "../../utils/token.js";
+} from "../utils/token.js";
 
 /* ===================== COOKIE HELPERS ===================== */
 
@@ -50,7 +50,7 @@ export const registerUser = catchAsync(async (req, res, next) => {
   await User.create({
     username,
     email,
-    password: hashedPassword,
+    password,
   });
 
   res.status(201).json({
@@ -243,17 +243,35 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   const { token } = req.params;
   const { password } = req.body;
 
+  // 1. Log the incoming token
+  console.log("--> RESET PASSWORD DEBUG");
+  console.log("1. Received Token:", token);
+
+  // 2. Create the hash
   const hashedToken = crypto
     .createHash("sha256")
     .update(token)
     .digest("hex");
 
+  console.log("2. Hashed Token:", hashedToken);
+
+  // 3. Attempt to find the user
   const user = await User.findOne({
     resetPasswordToken: hashedToken,
     resetPasswordExpire: { $gt: Date.now() },
   });
 
+  console.log("3. User Found:", user ? user.username : "NO MATCH");
+
   if (!user) {
+    // Debugging logic
+    const expiredUser = await User.findOne({ resetPasswordToken: hashedToken });
+    if (expiredUser) {
+      console.log("--> ERROR: Token found but expired at", expiredUser.resetPasswordExpire);
+    } else {
+      console.log("--> ERROR: Token hash not found in DB at all.");
+    }
+
     return next(
       new AppError(
         "Token is invalid or expired",
@@ -263,10 +281,15 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     );
   }
 
-  user.password = await bcrypt.hash(password, 10);
+  // 4. Update Password (FIX IS HERE)
+  // We save the PLAIN password. The User Model's pre('save') hook will hash it automatically.
+  user.password = password; 
+  
+  // Clear reset fields
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
 
+  // 5. Save user (Triggering the model's hashing hook)
   await user.save();
 
   res.status(200).json({

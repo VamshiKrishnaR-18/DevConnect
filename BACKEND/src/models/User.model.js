@@ -1,82 +1,65 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
-const userSchema = mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      required: [true, "Username is required"],
+      required: true,
       unique: true,
       trim: true,
-      minlength: [3, "Username must be at least 3 characters long"],
-      maxlength: [30, "Username cannot exceed 30 characters"],
     },
     email: {
       type: String,
-      required: [true, "Email is required"],
+      required: true,
       unique: true,
       trim: true,
       lowercase: true,
-      match: [
-        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-        "Please enter a valid email address",
-      ],
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
-      minlength: [6, "Password must be at least 6 characters long"],
+      required: true,
+      minlength: 6,
+      select: false,
     },
-    bio: {
-      type: String,
-      default: "",
-      maxlength: [500, "Bio cannot exceed 500 characters"],
-    },
-    profilepic: {
-      type: String,
-      default: "/defaultAvatar.svg",
-    },
-    followers: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    following: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    links: [
-      {
-        type: String,
-        validate: {
-          validator: function (v) {
-            return /^https?:\/\/.+/.test(v);
-          },
-          message: "Links must be valid URLs starting with http:// or https://",
-        },
-      },
-    ],
     role: {
       type: String,
       enum: ["user", "admin"],
       default: "user",
     },
-    refreshToken: {
-      type: String,
-      select: false,
+    profilepic: {
+      url: { type: String, default: "" },
+      publicId: { type: String, default: "" },
     },
-    refreshTokenExpiresAt: {
-      type: Date,
-      select: false,
-    },
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    bio: { type: String, default: "" },
+    
+    // 👇 ADDED MISSING FIELDS 👇
+    refreshToken: String,
+    refreshTokenExpiresAt: Date,
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
   },
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-  },
+  { timestamps: true }
 );
+
+/* ===================== PASSWORD HASHING HOOK ===================== */
+// This runs automatically before .save() or .create()
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  
+  // Hash the password with cost of 12
+  this.password = await bcrypt.hash(this.password, 12);
+  next();
+});
+
+/* ===================== COMPARE PASSWORD METHOD ===================== */
+userSchema.methods.correctPassword = async function (
+  candidatePassword,
+  userPassword
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
 
 export default mongoose.model("User", userSchema);

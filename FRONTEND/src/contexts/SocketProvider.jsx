@@ -1,14 +1,15 @@
-import { useEffect, useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { io } from "socket.io-client";
 import config from "../config/environment.js";
-import { SocketContext } from "./SocketContextStore";
 import { AuthContext } from "./AuthContext.jsx";
+import { SocketContext } from "./SocketContext.js"; // <--- Import from the separate file
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
+    // Initialize Socket
     const socketInstance = io(config.SOCKET_URL, config.socketConfig);
 
     socketInstance.on("connect", () => {
@@ -36,21 +37,23 @@ export const SocketProvider = ({ children }) => {
 
     socket.emit("join", user._id);
     console.log("👤 Joined socket room:", user._id);
-  }, [socket, user?._id]);
+  }, [socket, user]);
 
   /* ===================== NOTIFICATION LISTENER ===================== */
   useEffect(() => {
     if (!socket) return;
 
     const handleNotification = (payload) => {
-      console.log("🔔 Notification received:", payload);
-      // frontend will fetch notifications from API
+      console.log("🔔 Socket Debug: Notification event received", payload);
     };
 
+    // Listen for events
     socket.on("NOTIFICATION", handleNotification);
+    socket.on("notification:new", handleNotification);
 
     return () => {
       socket.off("NOTIFICATION", handleNotification);
+      socket.off("notification:new", handleNotification);
     };
   }, [socket]);
 

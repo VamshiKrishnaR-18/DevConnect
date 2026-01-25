@@ -1,17 +1,8 @@
 import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 import dotenv from "dotenv";
-import { createRequire } from "module";
 
 dotenv.config();
-
-/**
- * multer-storage-cloudinary is CommonJS,
- * so we must load it via createRequire
- */
-const require = createRequire(import.meta.url);
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
-
-/* ===================== CONFIG ===================== */
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -19,26 +10,21 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/* ===================== STORAGE ===================== */
-
-// Post media storage
-export const postMediaStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "post_media",
-    allowed_formats: ["jpg", "png", "jpeg", "gif", "mp4", "mov", "avi"],
-    resource_type: "auto",
-  },
-});
-
-// (optional) profile picture storage
+// 1. Storage for Profile Pics
 export const profilePicStorage = new CloudinaryStorage({
-  cloudinary,
+  cloudinary: cloudinary,
   params: {
-    folder: "profile_pics",
-    allowed_formats: ["jpg", "png", "jpeg"],
-    transformation: [{ width: 400, height: 400, crop: "fill" }],
+    folder: "devconnect/profile_pics",
+    allowed_formats: ["jpg", "png", "jpeg", "webp"],
   },
 });
 
-export default cloudinary;
+// 2. Storage for Post Media (REQUIRED FOR POSTS)
+export const postMediaStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "devconnect/posts",
+    allowed_formats: ["jpg", "png", "jpeg", "webp", "mp4", "mov", "avi"],
+    resource_type: "auto", // Important: Allows both images and videos
+  },
+});

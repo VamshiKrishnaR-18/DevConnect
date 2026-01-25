@@ -1,30 +1,27 @@
 import express from "express";
-
-import likeRoutes from "./like.routes.js";
 import {
   createTextPost,
   createMediaPost,
   getAllPosts,
   deletePost,
-} from "./post.controller.js";
+  toggleLike, // <--- ADDED THIS
+  addComment, // <--- ADDED THIS
+} from "../controllers/post.controller.js";
 
-import authMiddleware from "../../middlewares/auth.middleware.js";
-import validate from "../../middlewares/validate.middleware.js";
-import { mediaUpload } from "../../middlewares/mediaUpload.middleware.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
+import validate from "../middlewares/validate.middleware.js";
+import { mediaUpload } from "../middlewares/mediaUpload.middleware.js";
 
 import {
   createPostSchema,
   createPostWithMediaSchema,
   getPostsSchema,
   postIdParamSchema,
-} from "../../validations/post.validation.js";
+} from "../validations/post.validation.js";
 
 const router = express.Router();
 
 /* ===================== ROUTES ===================== */
-
-// Mount like routes
-router.use("/", likeRoutes);
 
 // Get all posts
 router.get(
@@ -57,6 +54,22 @@ router.delete(
   authMiddleware,
   validate(postIdParamSchema),
   deletePost
+);
+
+/* ===================== NEW ROUTES (Fixes 404) ===================== */
+
+// Toggle Like
+router.post(
+  "/:postId/like", 
+  authMiddleware, 
+  toggleLike
+);
+
+// Add Comment
+router.post(
+  "/:postId/comment", 
+  authMiddleware, 
+  addComment
 );
 
 export default router;

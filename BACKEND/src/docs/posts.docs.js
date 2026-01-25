@@ -1,6 +1,6 @@
-import { registry } from "../../docs/openapi.js";
+import { registry } from "./openapi.js";
 import { z } from "zod";
-import { createPostSchema } from "../../validations/post.validation.js";
+import { createPostSchema } from "../validations/post.validation.js";
 
 /* ================== CREATE POST ================== */
 registry.registerPath({

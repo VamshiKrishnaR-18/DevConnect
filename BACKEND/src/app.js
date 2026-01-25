@@ -3,10 +3,19 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import morgan from "morgan";
 import path from "path";
+import { fileURLToPath } from "url";
 import swaggerUi from "swagger-ui-express";
+
 
 import { generateOpenAPISpec } from "./docs/openapi.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
+
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
 
 /* ===================== INIT APP ===================== */
 
@@ -16,28 +25,21 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend
+
+    origin: process.env.CLIENT_URL || "http://localhost:5173", 
     credentials: true,
   })
-);
+)
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
 
-/* ===================== STATIC FILES ===================== */
-/* 🚨 REQUIRED FOR PROFILE PICS */
-
-app.use(
-  "/uploads",
-  express.static(path.join(process.cwd(), "uploads"))
-);
 
 /* ===================== IMPORT DOCS ===================== */
 
-import "./modules/auth/auth.docs.js";
-import "./modules/posts/posts.docs.js";
-import "./modules/comments/comments.docs.js";
+import "./docs/auth.docs.js";
+import "./docs/posts.docs.js";
 
 /* ===================== SWAGGER ===================== */
 
@@ -49,19 +51,19 @@ app.use(
 
 /* ===================== ROUTES ===================== */
 
-import authRoutes from "./modules/auth/auth.routes.js";
-import userRoutes from "./modules/users/user.routes.js";
-import postRoutes from "./modules/posts/post.routes.js";
-import commentRoutes from "./modules/comments/comment.routes.js";
-import adminRoutes from "./modules/admin/admin.routes.js";
-import notificationRoutes from "./modules/notifications/notification.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import postRoutes from "./routes/post.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
-app.use("/api/comments", commentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
+
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 /* ===================== ERROR HANDLER ===================== */
 

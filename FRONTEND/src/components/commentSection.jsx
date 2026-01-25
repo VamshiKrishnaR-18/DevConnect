@@ -2,9 +2,11 @@ import { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import api from "../utils/api";
 import { AuthContext } from "../contexts/AuthContext";
+import { useSocket } from "../contexts/SocketContextStore"; // ADD: Import socket hook
 
 export default function CommentSection({ postId }) {
   const { user } = useContext(AuthContext);
+  const socket = useSocket(); // ADD: Get socket instance
 
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -15,7 +17,8 @@ export default function CommentSection({ postId }) {
     const fetchComments = async () => {
       try {
         const res = await api.get(`/comments/${postId}`);
-        setComments(res.data.comments || []);
+        // FIX: Backend returns { data: { comments: [...] } }
+        setComments(res.data.data?.comments || []);
       } catch (err) {
         console.error("Error fetching comments:", err);
       } finally {
@@ -25,6 +28,32 @@ export default function CommentSection({ postId }) {
 
     if (postId) fetchComments();
   }, [postId]);
+
+  /* ===================== REAL-TIME SOCKETS ===================== */
+  useEffect(() => {
+    if (!socket || !postId) return;
+
+    // Handle new comment coming from others
+    const handleNewComment = ({ postId: eventPostId, comment }) => {
+      if (eventPostId === postId) {
+        setComments((prev) => [comment, ...prev]);
+      }
+    };
+
+    // Handle comment deletion
+    const handleCommentDeleted = ({ commentId }) => {
+      setComments((prev) => prev.filter((c) => c._id !== commentId));
+    };
+
+    // Listen to events
+    socket.on("comment:created", handleNewComment);
+    socket.on("commentDeleted", handleCommentDeleted); // Note: Backend uses this specific string for delete
+
+    return () => {
+      socket.off("comment:created", handleNewComment);
+      socket.off("commentDeleted", handleCommentDeleted);
+    };
+  }, [socket, postId]);
 
   /* ===================== ADD COMMENT ===================== */
   const handleAddComment = async () => {
@@ -37,8 +66,12 @@ export default function CommentSection({ postId }) {
         text: newComment,
       });
 
-      if (res.data?.comment) {
-        setComments((prev) => [res.data.comment, ...prev]);
+      // FIX: Check res.data.data.comment
+      if (res.data?.data?.comment) {
+        // We don't manually add it here if socket is working, 
+        // but it's safe to keep or rely on socket. 
+        // Ideally, rely on socket to avoid duplicates, OR check ID.
+        // For simplicity, we'll let the socket update the UI to ensure sync.
         setNewComment("");
       }
     } catch (err) {
@@ -50,6 +83,7 @@ export default function CommentSection({ postId }) {
   const handleDelete = async (commentId) => {
     try {
       await api.delete(`/comments/${commentId}`);
+      // Optimistic update (removed immediately)
       setComments((prev) => prev.filter((c) => c._id !== commentId));
     } catch (err) {
       console.error("Error deleting comment:", err);

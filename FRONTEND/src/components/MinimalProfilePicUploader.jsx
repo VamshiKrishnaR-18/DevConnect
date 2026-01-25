@@ -1,137 +1,77 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Camera } from "lucide-react";
 import api from "../utils/api";
 
-function MinimalProfilePicUploader({ onUpload }) {
-  const [file, setFile] = useState(null);
+const MinimalProfilePicUploader = ({ currentPic, onUpdate }) => {
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    setError(null);
-
-    if (!selectedFile) {
-      setFile(null);
-      return;
-    }
-
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
-    if (!allowedTypes.includes(selectedFile.type)) {
-      setError("Please select a valid image file (JPEG, JPG, or PNG)");
-      setFile(null);
-      return;
-    }
-
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (selectedFile.size > maxSize) {
-      setError("File size must be less than 5MB");
-      setFile(null);
-      return;
-    }
-
-    setFile(selectedFile);
-    handleUpload(selectedFile);
+  const handleIconClick = () => {
+    fileInputRef.current.click();
   };
 
-  const handleUpload = async (fileToUpload = file) => {
-    if (!fileToUpload) return;
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
+    console.log("--> FRONTEND: File selected:", file.name, file.type, file.size);
+    await handleUpload(file);
+  };
+
+  const handleUpload = async (file) => {
     setUploading(true);
-    setError(null);
-
     const formData = new FormData();
-    formData.append("profilepic", fileToUpload);
+    formData.append("profilePic", file);
+
+    // Debug: Log FormData contents
+    for (let [key, value] of formData.entries()) {
+      console.log(`--> FRONTEND: FormData Key: ${key}, Value:`, value);
+    }
 
     try {
+      console.log("--> FRONTEND: Sending request to /users/profile-pic...");
       const res = await api.put("/users/profile-pic", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      onUpload(res.data.profilePic);
-      setFile(null);
-    } catch (error) {
-      console.error("Upload failed", error);
+      console.log("--> FRONTEND: Upload success response:", res.data);
 
-      if (error.response?.status === 401) {
-        setError("You must be logged in to upload a profile picture");
-      } else if (error.code === "ECONNABORTED") {
-        setError("Upload timed out. Please try a smaller file.");
-      } else {
-        setError(
-          error.response?.data?.msg ||
-            error.message ||
-            "Upload failed. Please try again."
-        );
+      if (onUpdate && res.data.data) {
+        onUpdate(res.data.data.profilePic);
+      } else if (onUpdate && res.data.profilePic) {
+        onUpdate(res.data.profilePic);
       }
+    } catch (err) {
+      console.error("--> FRONTEND ERROR:", err.response?.data || err.message);
+      alert("Failed to upload profile picture.");
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center space-y-3">
-      <div className="relative">
-        <input
-          id="minimal-file-input"
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-          disabled={uploading}
-        />
-        <button
-          onClick={() =>
-            !uploading &&
-            document.getElementById("minimal-file-input").click()
-          }
-          disabled={uploading}
-          className={`inline-flex items-center space-x-2 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-300 ${
-            uploading
-              ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-              : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm hover:shadow"
-          }`}
-        >
-          {uploading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-              <span>Uploading...</span>
-            </>
-          ) : (
-            <>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              <span>Change Photo</span>
-            </>
-          )}
-        </button>
-      </div>
-
-      {error && (
-        <div className="text-center max-w-xs">
-          <p className="text-red-500 text-xs">{error}</p>
-        </div>
-      )}
+    <div className="relative inline-block">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        accept="image/*"
+      />
+      <button
+        type="button"
+        onClick={handleIconClick}
+        disabled={uploading}
+        className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-all disabled:opacity-50"
+      >
+        {uploading ? (
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <Camera size={16} />
+        )}
+      </button>
     </div>
   );
-}
+};
 
 export default MinimalProfilePicUploader;

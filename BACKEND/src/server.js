@@ -18,7 +18,8 @@ const server = http.createServer(app);
 /* ===================== SOCKET.IO ===================== */
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    // CHANGE: Allow env variable or array of common ports
+    origin: process.env.CLIENT_URL || ["http://localhost:5173", "http://localhost:5174"],
     credentials: true,
   },
 });
@@ -39,7 +40,6 @@ io.on("connection", (socket) => {
     console.log("❌ Socket disconnected:", socket.id);
   });
 });
-
 
 /* ===================== START SERVER ===================== */
 server.listen(PORT, () => {

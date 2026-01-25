@@ -1,5 +1,5 @@
-import { registry } from "../../docs/openapi.js";
-import { registerSchema, loginSchema } from "../../validations/auth.validation.js";
+import { registry } from "./openapi.js";
+import { registerSchema, loginSchema } from "../validations/auth.validation.js";
 
 /* ================== REGISTER ================== */
 registry.registerPath({

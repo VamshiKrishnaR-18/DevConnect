@@ -1,5 +1,5 @@
 import express from "express";
-import { authRateLimiter } from "../../middlewares/rateLimit.middleware.js";
+import { authRateLimiter } from "../middlewares/rateLimit.middleware.js";
 
 import {
   registerUser,
@@ -10,15 +10,15 @@ import {
   forgotPassword,
   resetPassword,
   refreshAccessToken,
-} from "./auth.controller.js";
+} from "../controllers/auth.controller.js";
 
-import validate from "../../middlewares/validate.middleware.js";
-import authMiddleware from "../../middlewares/auth.middleware.js";
+import validate from "../middlewares/validate.middleware.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
 
 import {
   registerSchema,
   loginSchema,
-} from "../../validations/auth.validation.js";
+} from "../validations/auth.validation.js";
 
 const router = express.Router();
 

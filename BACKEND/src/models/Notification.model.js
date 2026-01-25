@@ -10,21 +10,22 @@ const notificationSchema = new mongoose.Schema(
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      required: true,
     },
     type: {
       type: String,
-      enum: ["FOLLOW", "COMMENT", "LIKE"],
+      enum: ["LIKE", "COMMENT", "FOLLOW"],
       required: true,
-    },
-    post: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Post",
     },
     message: {
       type: String,
       required: true,
     },
-    isRead: {
+    link: {
+      type: String, // e.g., "/post/123" or "/profile/username"
+      default: "",
+    },
+    read: {
       type: Boolean,
       default: false,
     },
