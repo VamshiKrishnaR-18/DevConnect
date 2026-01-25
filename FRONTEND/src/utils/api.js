@@ -10,11 +10,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const isAuthMe =
-      error.config?.url?.includes("/api/auth/me") &&
+      error.config?.url?.includes("/auth/me") &&
       error.response?.status === 401;
 
     if (isAuthMe) {
-      return Promise.reject(error); // silent
+      // Not logged in — normal case
+      return Promise.reject(error);
     }
 
     console.error("API Error:", error);

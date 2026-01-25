@@ -20,8 +20,8 @@ export const getProfile = catchAsync(async (req, res, next) => {
   const user = await userModel
     .findOne({ username })
     .select("-password")
-    .populate("followers", "username profilepic")
-    .populate("following", "username profilepic");
+    .populate("followers", "username profilePic")
+    .populate("following", "username profilePic");
 
   if (!user) {
     return next(
@@ -94,30 +94,36 @@ export const unFollowUser = catchAsync(async (req, res) => {
 
 /* ===================== UPDATE PROFILE PIC ===================== */
 
-export const updateProfilePic = catchAsync(async (req, res, next) => {
-  if (!req.file) {
-    return next(
-      new AppError("No file uploaded", 400, "NO_FILE")
-    );
+export const updateProfilePic = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
+
+    const user = await userModel.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    user.profilePic = req.file.filename;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      profilePic: user.profilePic,
+    });
+  } catch (error) {
+    console.error("Profile pic upload error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload profile picture",
+    });
   }
+};
 
-  const user = await userModel.findById(req.user._id);
-  if (!user) {
-    return next(
-      new AppError("User not found", 404, "USER_NOT_FOUND")
-    );
-  }
-
-  const profilePicUrl = `/uploads/profile/${req.file.filename}`;
-
-  user.profilepic = profilePicUrl;
-  await user.save();
-
-  res.status(200).json({
-    success: true,
-    message: "Profile picture updated successfully",
-    data: {
-      profilepic: user.profilepic,
-    },
-  });
-});

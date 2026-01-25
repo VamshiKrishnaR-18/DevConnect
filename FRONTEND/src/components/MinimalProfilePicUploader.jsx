@@ -49,7 +49,7 @@ function MinimalProfilePicUploader({ onUpload }) {
         },
       });
 
-      onUpload(res.data.profilepic);
+      onUpload(res.data.profilePic);
       setFile(null);
     } catch (error) {
       console.error("Upload failed", error);

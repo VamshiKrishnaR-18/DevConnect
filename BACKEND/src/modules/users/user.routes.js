@@ -46,8 +46,7 @@ router.put(
 router.put(
   "/profile-pic",
   authMiddleware,
-  profileUpload.single("profilepic"),
-  validate(updateProfilePicSchema),
+  profileUpload.single("profilePic"),
   updateProfilePic
 );
 

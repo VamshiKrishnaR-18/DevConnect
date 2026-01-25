@@ -1,11 +1,12 @@
-import cookieParser from "cookie-parser";
-
 import express from "express";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import morgan from "morgan";
-
+import path from "path";
 import swaggerUi from "swagger-ui-express";
+
 import { generateOpenAPISpec } from "./docs/openapi.js";
+import errorMiddleware from "./middlewares/error.middleware.js";
 
 /* ===================== INIT APP ===================== */
 
@@ -16,14 +17,24 @@ const app = express();
 app.use(
   cors({
     origin: "http://localhost:5173", // frontend
-    credentials: true,               // allow cookies
+    credentials: true,
   })
 );
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
 
+/* ===================== STATIC FILES ===================== */
+/* 🚨 REQUIRED FOR PROFILE PICS */
+
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "uploads"))
+);
+
 /* ===================== IMPORT DOCS ===================== */
+
 import "./modules/auth/auth.docs.js";
 import "./modules/posts/posts.docs.js";
 import "./modules/comments/comments.docs.js";
@@ -50,15 +61,10 @@ app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/admin", adminRoutes);
-app.use(
-  "/api/notifications",
-  notificationRoutes
-);
-
+app.use("/api/notifications", notificationRoutes);
 
 /* ===================== ERROR HANDLER ===================== */
 
-import errorMiddleware from "./middlewares/error.middleware.js";
 app.use(errorMiddleware);
 
 export default app;

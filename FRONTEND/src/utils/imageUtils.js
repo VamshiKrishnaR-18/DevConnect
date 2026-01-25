@@ -1,20 +1,13 @@
-/**
- * Utility function to get the correct profile image source
- * @param {string} profilepic - The profile picture path/URL from the database
- * @returns {string} - The correct image source URL
- */
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const getProfileImageSrc = (profilepic) => {
-  if (!profilepic) {
-    return '/defaultAvatar.svg';
+  if (!profilepic) return "/defaultAvatar.svg";
+
+  if (profilepic.startsWith("http")) return profilepic;
+
+  if (profilepic.startsWith("/uploads")) {
+    return `${API_URL}${profilepic}`;
   }
 
-  if (profilepic.startsWith('http')) {
-    return profilepic;
-  }
-
-  if (profilepic.startsWith('/uploads')) {
-    return profilepic;
-  }
-
-  return profilepic;
+  return `${API_URL}/uploads/profile/profile_pics/${profilepic}`;
 };
