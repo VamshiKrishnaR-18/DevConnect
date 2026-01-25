@@ -129,14 +129,17 @@ export const deletePost = catchAsync(async (req, res) => {
 
 /* ===================== TOGGLE LIKE ===================== */
 export const toggleLike = catchAsync(async (req, res) => {
+  // 1. Get IO instance FIRST
+  const io = req.app.get("io");
+
+  // 2. Pass 'io' to the service
   const result = await toggleLikeService({
     postId: req.params.postId,
     userId: req.user._id,
+    io: io // <--- PASS IT HERE
   });
 
-  const io = req.app.get("io");
-  // Optional: Emit socket event for real-time likes
-  // emitSocketEvent(io, "post:liked", { postId: req.params.postId, likes: result.likes });
+  // (You can remove the manual emitSocketEvent here if the service handles notifications now)
 
   res.status(200).json({
     success: true,
@@ -147,14 +150,16 @@ export const toggleLike = catchAsync(async (req, res) => {
 
 /* ===================== ADD COMMENT ===================== */
 export const addComment = catchAsync(async (req, res) => {
+  // 1. Get IO instance FIRST
+  const io = req.app.get("io");
+
+  // 2. Pass 'io' to the service
   const comments = await addCommentService({
     postId: req.params.postId,
     userId: req.user._id,
     text: req.body.text,
+    io: io // <--- PASS IT HERE
   });
-
-  const io = req.app.get("io");
-  // Optional: Emit socket event for real-time comments
 
   res.status(200).json({
     success: true,

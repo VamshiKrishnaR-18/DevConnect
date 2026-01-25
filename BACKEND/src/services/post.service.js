@@ -58,7 +58,8 @@ export const deletePostService = async ({ postId, userId }) => {
 };
 
 /* ===================== LIKE / UNLIKE POST ===================== */
-export const toggleLikeService = async ({ postId, userId }) => {
+// 1. Accept 'io' in the arguments
+export const toggleLikeService = async ({ postId, userId, io }) => {
   const post = await postModel.findById(postId);
 
   if (!post) {
@@ -68,41 +69,34 @@ export const toggleLikeService = async ({ postId, userId }) => {
   const isLiked = post.likes.includes(userId);
 
   if (isLiked) {
-    // UNLIKE
+    // UNLIKE logic...
     post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
   } else {
-    // LIKE
+    // LIKE logic...
     post.likes.push(userId);
 
-    // 🔔 2. SEND NOTIFICATION (Only if not liking own post)
+    // 🔔 SEND NOTIFICATION
     if (post.user.toString() !== userId.toString()) {
       await createNotification({
         recipient: post.user,
         sender: userId,
         type: "LIKE",
         message: "liked your post",
-        link: `/post/${postId}`
+        link: `/post/${postId}`,
+        io: io // <--- 2. PASS IO TO NOTIFICATION SERVICE
       });
-      console.log(`🔔 Notification sent: User ${userId} liked Post ${postId}`);
     }
   }
 
   await post.save();
-
-  return { 
-    postId, 
-    likes: post.likes, 
-    liked: !isLiked 
-  };
+  return { postId, likes: post.likes, liked: !isLiked };
 };
 
 /* ===================== ADD COMMENT ===================== */
-export const addCommentService = async ({ postId, userId, text }) => {
+// 1. Accept 'io' in the arguments
+export const addCommentService = async ({ postId, userId, text, io }) => {
   const post = await postModel.findById(postId);
-
-  if (!post) {
-    throw new AppError("Post not found", 404, "POST_NOT_FOUND");
-  }
+  // ... existing validation ...
 
   const newComment = {
     user: userId,
@@ -113,19 +107,18 @@ export const addCommentService = async ({ postId, userId, text }) => {
   post.comments.push(newComment);
   await post.save();
 
-  // 🔔 3. SEND NOTIFICATION (Only if not commenting on own post)
+  // 🔔 SEND NOTIFICATION
   if (post.user.toString() !== userId.toString()) {
     await createNotification({
       recipient: post.user,
       sender: userId,
       type: "COMMENT",
       message: `commented: "${text.substring(0, 20)}..."`,
-      link: `/post/${postId}`
+      link: `/post/${postId}`,
+      io: io // <--- 2. PASS IO TO NOTIFICATION SERVICE
     });
-    console.log(`🔔 Notification sent: User ${userId} commented on Post ${postId}`);
   }
 
   await post.populate("comments.user", "username profilepic");
-
   return post.comments;
 };

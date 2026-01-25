@@ -3,9 +3,9 @@ import { useParams } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import { useSocket } from "../contexts/SocketContext";
 import ZoomableProfilePic from "../components/ZoomableProfilePic";
-import { getProfileImageSrc } from "../utils/imageUtils";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import PostCard from "../components/PostCard"; 
 import api from "../utils/api"; 
 
 function Profile() {
@@ -27,7 +27,14 @@ function Profile() {
         setError(null);
 
         const response = await api.get(`/users/profile/${username}`);
-        setProfile(response.data.data);
+        const data = response.data.data;
+
+        // SORTING: Ensure Newest Posts come first
+        if (data.posts && Array.isArray(data.posts)) {
+            data.posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+
+        setProfile(data);
       } catch (err) {
         if (err.response?.status === 404) {
           setError(`User "${username}" not found.`);
@@ -92,7 +99,7 @@ function Profile() {
     };
   }, [socket, profile]);
 
-  /* ===================== FOLLOW / UNFOLLOW ===================== */
+  /* ===================== ACTIONS ===================== */
   const handleFollowToggle = async () => {
     if (!user || !profile) return;
 
@@ -110,6 +117,13 @@ function Profile() {
     } finally {
       setFollowLoading(false);
     }
+  };
+
+  const handlePostDeleted = (deletedPostId) => {
+    setProfile((prev) => ({
+      ...prev,
+      posts: prev.posts.filter(p => p._id !== deletedPostId)
+    }));
   };
 
   /* ===================== RENDER ===================== */
@@ -137,7 +151,6 @@ function Profile() {
 
   if (!profile) return null;
 
-  // Helper to safely get the picture object/string regardless of casing
   const userProfilePic = profile.user.profilepic || profile.user.profilePic;
 
   return (
@@ -153,25 +166,22 @@ function Profile() {
           {/* Profile */}
           <div className="px-6 pb-6 -mt-16 text-center">
             
-            {/* 1. CRITICAL FIX: Pass the safe variable we defined above */}
             <ZoomableProfilePic
               profilePic={userProfilePic}
               username={profile.user.username}
               isOwnProfile={user?.username === profile.user.username}
               onUpload={(url) => {
-                // Update local state (UI)
                 setProfile((prev) => ({
                   ...prev,
-                  user: { ...prev.user, profilePic: url }, // Here we update with CamelCase
+                  user: { ...prev.user, profilePic: url }, 
                 }));
-                // Update Auth Context (Navbar)
                 if (user?.username === profile.user.username) {
                   login({ ...user, profilePic: url });
                 }
               }}
             />
 
-            <h1 className="text-2xl font-bold mt-4">{profile.user.username}</h1>
+            <h1 className="text-2xl font-bold mt-4 dark:text-white">{profile.user.username}</h1>
 
             {profile.user.bio && (
               <p className="mt-2 text-gray-600 dark:text-gray-300">
@@ -180,7 +190,7 @@ function Profile() {
             )}
 
             {/* Stats */}
-            <div className="flex justify-center gap-8 mt-4">
+            <div className="flex justify-center gap-8 mt-4 dark:text-gray-200">
               <div>
                 <div className="font-bold">{profile.posts?.length || 0}</div>
                 <div className="text-sm">Posts</div>
@@ -209,30 +219,26 @@ function Profile() {
         </div>
 
         {/* Posts */}
-        <div className="max-w-4xl mx-auto mt-6">
+        <div className="max-w-2xl mx-auto mt-6">
+          <h2 className="text-xl font-bold mb-4 ml-1 dark:text-white">Posts</h2>
+          
           {profile.posts?.length > 0 ? (
             profile.posts.map((post) => (
-              <div key={post._id} className="bg-white dark:bg-gray-800 p-4 mb-4 rounded-xl shadow">
-                <div className="flex items-center gap-3 mb-2">
-                  
-                  {/* 2. CRITICAL FIX: Ensure the post avatar also uses the correct key */}
-                  <img
-                    src={getProfileImageSrc(profile.user.profilepic || profile.user.profilePic)}
-                    className="w-10 h-10 rounded-full object-cover"
-                    onError={(e) => (e.target.src = "/defaultAvatar.svg")}
-                    alt={profile.user.username}
-                  />
-                  
-                  <span className="font-semibold">{profile.user.username}</span>
-                  <span className="text-gray-500 text-sm ml-auto">
-                    {new Date(post.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="text-gray-800 dark:text-gray-200">{post.content}</p>
-              </div>
+              <PostCard 
+                key={post._id} 
+                post={{
+                    ...post,
+                    user: typeof post.user === 'string' ? profile.user : post.user 
+                }}
+                // Pass showDelete=true ONLY here in UserProfile
+                showDelete={true}
+                onDelete={handlePostDeleted}
+              />
             ))
           ) : (
-            <div className="text-center text-gray-500 mt-10">No posts yet</div>
+            <div className="text-center text-gray-500 mt-10 p-10 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                No posts yet
+            </div>
           )}
         </div>
       </div>

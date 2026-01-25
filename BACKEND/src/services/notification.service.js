@@ -1,8 +1,8 @@
 import Notification from "../models/Notification.model.js";
+import { emitSocketEvent } from "../utils/emitSocketEvent.js";
 
 /* ===================== CREATE NOTIFICATION ===================== */
-// This function is called internally by Post/User services
-export const createNotification = async ({ recipient, sender, type, message, link }) => {
+export const createNotification = async ({ recipient, sender, type, message, link, io }) => {
   try {
     const notification = await Notification.create({
       recipient,
@@ -13,9 +13,11 @@ export const createNotification = async ({ recipient, sender, type, message, lin
       read: false
     });
 
-    // We don't await this because we don't want to block the user request
-    // Just let it populate in the background if needed for sockets
-    // (Real-time socket logic would go here)
+    // FIX: Send Real-time Update
+    if (io) {
+      // The event name must match what NotificationProvider.jsx expects ("notification:new")
+      emitSocketEvent(io, "notification:new", notification);
+    }
     
     return notification;
   } catch (error) {
