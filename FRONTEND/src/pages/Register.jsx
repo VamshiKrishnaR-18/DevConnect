@@ -51,9 +51,12 @@ function Register() {
       });
 
       setSuccess("Registration successful! Redirecting to login...");
+      
+      // 👇 FIX: Redirect to /login instead of /
       setTimeout(() => {
-        navigate("/");
+        navigate("/login");
       }, 2000);
+      
     } catch (error) {
       console.error("Registration error:", error);
       setError(
@@ -93,7 +96,7 @@ function Register() {
               placeholder="Username"
               value={formData.username}
               onChange={handleChange}
-              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               disabled={loading}
               required
             />
@@ -104,7 +107,7 @@ function Register() {
               autoComplete="username"
               value={formData.email}
               onChange={handleChange}
-              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               disabled={loading}
               required
             />
@@ -115,13 +118,13 @@ function Register() {
               autoComplete="current-password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+              className="w-full mb-4 p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               disabled={loading}
               required
               minLength={6}
             />
             <button
-              className="w-full bg-blue-600 text-white p-2 rounded"
+              className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition-colors disabled:bg-blue-400"
               type="submit"
               disabled={loading}
             >

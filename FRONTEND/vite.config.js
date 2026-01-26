@@ -19,4 +19,11 @@ export default defineConfig({
       },
     },
   },
+  // 1. Add this "test" object for Vitest
+  test: {
+    globals: true,           // Allows us to use describe, it, expect without importing
+    environment: 'jsdom',    // Simulates a browser (window, document) in Node
+    setupFiles: './src/setupTests.js', // Runs before each test file
+    css: true,               // Processes CSS modules
+  },
 });

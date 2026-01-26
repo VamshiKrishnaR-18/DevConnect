@@ -70,20 +70,38 @@ export const createMediaPost = async (req, res, next) => {
   }
 };
 
-/* ===================== GET ALL POSTS ===================== */
 
 /* ===================== GET ALL POSTS ===================== */
 export const getAllPosts = catchAsync(async (req, res, next) => {
+  // 1. Get page and limit from query params (default to page 1, limit 10)
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  // 2. Get total count so frontend knows when to stop scrolling
+  const totalPosts = await postModel.countDocuments();
+
+  // 3. Fetch only the requested slice
   const posts = await postModel
     .find()
     // CRITICAL: Must populate 'user' and include 'profilepic'
     .populate("user", "username profilepic") 
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 
   res.status(200).json({
     success: true,
     results: posts.length,
-    data: posts,
+    data: {
+      posts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalPosts / limit),
+        totalPosts,
+        hasMore: page * limit < totalPosts
+      }
+    },
   });
 });
 

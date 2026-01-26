@@ -4,11 +4,16 @@
   "description": "DevConnect Monorepo Root",
   "scripts": {
     "install-all": "npm install && cd BACKEND && npm install --legacy-peer-deps && cd ../FRONTEND && npm install",
-   "dev": "concurrently \"npm run dev --prefix BACKEND\" \"npm run dev --prefix FRONTEND\"",
+    "dev": "concurrently \"npm run dev --prefix BACKEND\" \"npm run dev --prefix FRONTEND\"",
     "server": "npm run server --prefix BACKEND",
-    "client": "npm run dev --prefix FRONTEND"
+    "client": "npm run dev --prefix FRONTEND",
+    "test": "concurrently \"npm test --prefix BACKEND\" \"npm test --prefix FRONTEND\"",
+    "test:backend": "npm test --prefix BACKEND",
+    "test:frontend": "npm test --prefix FRONTEND"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "@types/node": "^25.0.10",
     "concurrently": "^8.2.0"
   },
   "keywords": [],

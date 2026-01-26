@@ -2,38 +2,44 @@ import React, { useState, useEffect } from "react";
 import { useSocket } from "../contexts/SocketContext";
 import api from "../utils/api";
 import Navbar from "../components/Navbar";
-import PostCard from "../components/PostCard"; // <--- Import the component
+import PostCard from "../components/PostCard";
 import { Loader2, Send, Image as ImageIcon, MessageCircle } from "lucide-react";
+// 1. Import the new hook (Ensure you installed @tanstack/react-query)
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
 const Feed = () => {
   const socket = useSocket();
-
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
 
   // Post Creation State
   const [newPostContent, setNewPostContent] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isPosting, setIsPosting] = useState(false);
 
-  /* ===================== FETCH POSTS ===================== */
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get("/posts");
-        setPosts(res.data.data || res.data);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching posts:", err);
-        setError("Unable to load posts. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPosts();
-  }, []);
+  /* ===================== REACT QUERY: INFINITE SCROLL ===================== */
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+    error
+  } = useInfiniteQuery({
+    queryKey: ["posts"],
+    queryFn: async ({ pageParam = 1 }) => {
+      // Fetch specifically page X with limit 10
+      const res = await api.get(`/posts?page=${pageParam}&limit=10`);
+      return res.data.data; // This is the { posts: [...], pagination: {...} } object
+    },
+    getNextPageParam: (lastPage) => {
+      // Calculate the next page number from the backend response
+      const { currentPage, totalPages } = lastPage.pagination;
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+  });
+
+  // Flatten the "pages" of data into one single list of posts
+  const posts = data?.pages.flatMap((page) => page.posts) || [];
 
   /* ===================== SOCKET LISTENER ===================== */
   useEffect(() => {
@@ -42,18 +48,26 @@ const Feed = () => {
     const handleNewPost = (event) => {
       const postData = event.data?.post || event.post || event;
       if (postData) {
-        // Add new post to top of list
-        setPosts((prev) => {
-            // Check for duplicates just in case
-            if (prev.some(p => p._id === postData._id)) return prev;
-            return [postData, ...prev];
+        // Manually update the React Query cache to show new post immediately
+        queryClient.setQueryData(["posts"], (oldData) => {
+          if (!oldData) return oldData;
+          // Add the new post to the beginning of the first page
+          const firstPage = oldData.pages[0];
+          const updatedFirstPage = {
+            ...firstPage,
+            posts: [postData, ...firstPage.posts]
+          };
+          return {
+            ...oldData,
+            pages: [updatedFirstPage, ...oldData.pages.slice(1)]
+          };
         });
       }
     };
 
     socket.on("post:created", handleNewPost);
     return () => socket.off("post:created", handleNewPost);
-  }, [socket]);
+  }, [socket, queryClient]);
 
   /* ===================== ACTIONS ===================== */
   const handlePostSubmit = async (e) => {
@@ -83,13 +97,18 @@ const Feed = () => {
   };
 
   /* ===================== RENDER ===================== */
-  if (loading) {
+  if (status === "pending") {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="animate-spin text-blue-600" size={32} />
-          <p className="text-gray-500 text-sm">Loading your feed...</p>
-        </div>
+        <Loader2 className="animate-spin text-blue-600" size={32} />
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-red-500">Error loading feed: {error.message}</p>
       </div>
     );
   }
@@ -99,17 +118,6 @@ const Feed = () => {
       <Navbar />
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-6 pb-12 px-4 transition-colors duration-200">
         <div className="max-w-2xl mx-auto space-y-6">
-
-          {/* Error Banner */}
-          {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-sm">
-              <div className="flex">
-                <div className="ml-3">
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Create Post Widget */}
           <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
@@ -164,22 +172,35 @@ const Feed = () => {
           </div>
 
           {/* Empty State */}
-          {!loading && posts.length === 0 && !error && (
+          {posts.length === 0 && (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <div className="bg-blue-50 dark:bg-blue-900/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MessageCircle className="text-blue-500" size={32} />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">No posts yet</h3>
-              <p className="text-gray-500 dark:text-gray-400 mt-1 max-w-xs mx-auto">
-                Be the first to share something with the community!
-              </p>
             </div>
           )}
 
-          {/* Posts Feed using PostCard */}
+          {/* Posts Feed */}
           {posts.map((post) => (
              <PostCard key={post._id} post={post} />
           ))}
+
+          {/* LOAD MORE BUTTON */}
+          <div className="text-center py-4">
+            {isFetchingNextPage ? (
+               <Loader2 className="animate-spin mx-auto text-blue-600" />
+            ) : hasNextPage ? (
+              <button 
+                onClick={() => fetchNextPage()}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+              >
+                Load More Posts
+              </button>
+            ) : posts.length > 0 ? (
+              <p className="text-gray-500 text-sm">You've reached the end!</p>
+            ) : null}
+          </div>
 
         </div>
       </div>

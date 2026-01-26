@@ -1,61 +1,53 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { io } from "socket.io-client";
 import config from "../config/environment.js";
 import { AuthContext } from "./AuthContext.jsx";
-import { SocketContext } from "./SocketContext.js"; // <--- Import from the separate file
+import { SocketContext } from "./SocketContext.js";
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const { user } = useContext(AuthContext);
+  
+  // Use a ref to hold the socket instance so it survives Strict Mode remounts
+  const socketRef = useRef(null);
 
   useEffect(() => {
-    // Initialize Socket
-    const socketInstance = io(config.SOCKET_URL, config.socketConfig);
+    // 1. Create socket only if it doesn't exist
+    if (!socketRef.current) {
+      socketRef.current = io(config.SOCKET_URL, {
+        ...config.socketConfig,
+        // Optional: Manual connect prevents "auto-connect" race conditions
+        autoConnect: false 
+      });
+      
+      // Connect manually
+      socketRef.current.connect();
+      
+      // Debug listeners
+      socketRef.current.on("connect", () => {
+        console.log("🔌 Socket connected:", socketRef.current.id);
+      });
+      
+      // Save to state so children can use it
+      setSocket(socketRef.current);
+    }
 
-    socketInstance.on("connect", () => {
-      console.log("🔌 Socket connected:", socketInstance.id);
-    });
-
-    socketInstance.on("disconnect", (reason) => {
-      console.log("❌ Socket disconnected:", reason);
-    });
-
-    socketInstance.on("connect_error", (error) => {
-      console.error("⚠️ Socket error:", error);
-    });
-
-    setSocket(socketInstance);
-
+    // 2. Cleanup: Only disconnect if the component is TRULY unmounting
+    // Note: In strict mode, this still runs, but we can verify state.
     return () => {
-      socketInstance.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
   }, []);
 
   /* ===================== JOIN USER ROOM ===================== */
   useEffect(() => {
     if (!socket || !user?._id) return;
-
     socket.emit("join", user._id);
     console.log("👤 Joined socket room:", user._id);
   }, [socket, user]);
-
-  /* ===================== NOTIFICATION LISTENER ===================== */
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleNotification = (payload) => {
-      console.log("🔔 Socket Debug: Notification event received", payload);
-    };
-
-    // Listen for events
-    socket.on("NOTIFICATION", handleNotification);
-    socket.on("notification:new", handleNotification);
-
-    return () => {
-      socket.off("NOTIFICATION", handleNotification);
-      socket.off("notification:new", handleNotification);
-    };
-  }, [socket]);
 
   return (
     <SocketContext.Provider value={socket}>
