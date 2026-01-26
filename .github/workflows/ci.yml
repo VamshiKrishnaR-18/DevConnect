@@ -27,22 +27,21 @@ jobs:
         node-version: '20'
         cache: 'npm'
 
-    # 👇 FIX: Install dependencies for Root, Backend, AND Frontend
     - name: Install All Dependencies
       run: |
         npm install
         cd BACKEND && npm install
-        cd FRONTEND && npm install
+        # 👇 FIX: Changed FRONTEND to frontend (lowercase)
+        cd frontend && npm install
 
     - name: Run Backend Tests
       env:
         MONGO_URI: mongodb://localhost:27017/test_db
         JWT_SECRET: "test_secret_123"
         NODE_ENV: "test"
-      # We run the backend test directly to avoid starting the frontend
       run: cd BACKEND && npm run test
 
-  # JOB 2: Build Frontend (Ensures React code is valid)
+  # JOB 2: Build Frontend
   frontend-build:
     runs-on: ubuntu-latest
     needs: backend-test
@@ -60,7 +59,9 @@ jobs:
     - name: Install All Dependencies
       run: |
         npm install
-        cd FRONTEND && npm install
+        # 👇 FIX: Changed FRONTEND to frontend here too
+        cd frontend && npm install
 
     - name: Build Frontend
-      run: cd FRONTEND && npm run build
+      # 👇 FIX: And here
+      run: cd frontend && npm run build
