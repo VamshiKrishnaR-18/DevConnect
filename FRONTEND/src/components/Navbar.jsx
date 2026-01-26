@@ -1,26 +1,28 @@
-import { Link } from "react-router-dom";
-import { useContext, useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-
-// 👇 CHANGE 1: Import the HOOK, not the Context
 import { useNotification } from "../contexts/NotificationContext"; 
-
 import { useDarkMode } from "../contexts/DarkModeContext";
 import { getProfileImageSrc } from "../utils/imageUtils";
+import api from "../utils/api"; // <--- Import API
 import "./Navbar.css";
-import { Bell, Menu, X, Sun, Moon, LogOut } from "lucide-react";
+import { Bell, Menu, X, Sun, Moon, LogOut, Search } from "lucide-react"; // <--- Import Search Icon
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
-
-  // 👇 CHANGE 2: Use the HOOK instead of useContext
   const { unreadCount, markAllAsRead } = useNotification(); 
-  
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const navigate = useNavigate();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // --- SEARCH STATE ---
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const searchRef = useRef(null);
 
   /* ===================== EFFECTS ===================== */
   useEffect(() => {
@@ -29,15 +31,45 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (showUserMenu && !e.target.closest(".user-menu-container")) {
         setShowUserMenu(false);
       }
+      if (showSearch && searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSearch(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showUserMenu]);
+  }, [showUserMenu, showSearch]);
+
+  // --- SEARCH HANDLER (Debounced) ---
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.trim().length > 0) {
+        try {
+          const res = await api.get(`/users/search?query=${searchQuery}`);
+          setSearchResults(res.data.data);
+          setShowSearch(true);
+        } catch (error) {
+          console.error("Search failed", error);
+        }
+      } else {
+        setSearchResults([]);
+        setShowSearch(false);
+      }
+    }, 300); // Wait 300ms after typing stops
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const handleUserClick = (username) => {
+    navigate(`/profile/${username}`);
+    setShowSearch(false);
+    setSearchQuery("");
+  };
 
   /* ===================== HANDLERS ===================== */
   const handleLogout = () => {
@@ -64,15 +96,52 @@ export default function Navbar() {
           DevConnect
         </Link>
 
+        {/* ===================== SEARCH BAR (Desktop) ===================== */}
+        {user && (
+          <div className="hidden md:block flex-1 max-w-md mx-4 relative" ref={searchRef}>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search developers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => searchQuery && setShowSearch(true)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 border-transparent focus:bg-white dark:focus:bg-gray-900 border focus:border-blue-500 rounded-full text-sm transition-all outline-none"
+              />
+            </div>
+
+            {/* Dropdown Results */}
+            {showSearch && searchResults.length > 0 && (
+              <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                {searchResults.map((u) => (
+                  <div
+                    key={u._id}
+                    onClick={() => handleUserClick(u.username)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                  >
+                    <img
+                      src={getProfileImageSrc(u.profilepic)}
+                      alt={u.username}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{u.username}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ===================== DESKTOP RIGHT ===================== */}
-        <div className="hidden md:flex items-center gap-5 shrink-0 ml-auto">
+        <div className="hidden md:flex items-center gap-5 shrink-0">
           {user && user.role !== "admin" && (
             <Link to="/feed" className="font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Feed
             </Link>
           )}
 
-          {/* 🔔 Notifications */}
+          {/* Notifications */}
           {user && (
             <Link
               to="/notifications" 
@@ -89,7 +158,7 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* 🌙 Dark Mode */}
+          {/* Dark Mode */}
           <button 
             onClick={toggleDarkMode} 
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300"
@@ -97,7 +166,7 @@ export default function Navbar() {
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          {/* 👤 USER MENU */}
+          {/* USER MENU */}
           {user ? (
             <div className="relative user-menu-container">
               <button
@@ -159,6 +228,24 @@ export default function Navbar() {
         <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 px-4 py-4 space-y-4 shadow-xl animate-in slide-in-from-top-5">
           {user ? (
             <>
+              {/* Mobile Search Input */}
+              <div className="relative mb-4">
+                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                 <input 
+                   type="text" 
+                   placeholder="Search..." 
+                   className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm"
+                   onKeyDown={(e) => {
+                     if(e.key === 'Enter') {
+                       // Simple mobile implementation: navigate to profile if typed exactly, 
+                       // or you could build a dedicated search page.
+                       // For now, let's just close menu
+                       setIsMobileMenuOpen(false);
+                     }
+                   }}
+                 />
+              </div>
+
               <Link 
                 to={`/profile/${user.username}`}
                 onClick={() => setIsMobileMenuOpen(false)}

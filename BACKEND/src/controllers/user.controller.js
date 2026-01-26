@@ -118,3 +118,27 @@ export const updateProfilePic = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
+/* ===================== SEARCH USERS ===================== */
+export const searchUsers = catchAsync(async (req, res) => {
+  const { query } = req.query;
+  
+  // If empty query, return empty list
+  if (!query || query.trim() === "") {
+    return res.status(200).json({ success: true, data: [] });
+  }
+
+  // Find users where username matches query (case-insensitive)
+  const users = await userModel
+    .find({
+      username: { $regex: query, $options: "i" },
+    })
+    .select("username profilepic") // Only return necessary info
+    .limit(10); // Limit results to avoid crashing the UI
+
+  res.status(200).json({
+    success: true,
+    data: users,
+  });
+});

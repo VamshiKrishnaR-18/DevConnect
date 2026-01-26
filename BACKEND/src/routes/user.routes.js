@@ -6,22 +6,21 @@ import {
   followUser,
   unFollowUser,
   updateProfilePic,
+  searchUsers, // <--- 1. Import this
 } from "../controllers/user.controller.js";
 
 const router = express.Router();
+
+// 2. Add the Search Route
+router.get("/search", authMiddleware, searchUsers);
 
 router.get("/profile/:username", authMiddleware, getProfile);
 router.post("/follow/:id", authMiddleware, followUser);
 router.post("/unfollow/:id", authMiddleware, unFollowUser);
 
-// Route with logging
 router.put(
   "/profile-pic",
   authMiddleware,
-  (req, res, next) => {
-    console.log("--> BACKEND ROUTE: Request received at /profile-pic");
-    next();
-  },
   profilePicUpload.single("profilePic"), 
   updateProfilePic
 );

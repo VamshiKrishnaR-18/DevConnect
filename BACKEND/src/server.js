@@ -39,7 +39,7 @@ io.on("connection", (socket) => {
 /* ===================== START SERVER ===================== */
 // Connect to DB, then start listening
 connectDB().then(() => {
-  server.listen(env.PORT, () => {
+  server.listen(env.PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
     console.log(`🔒 Security headers enabled`);
   });

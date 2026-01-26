@@ -5,7 +5,9 @@ import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
 import swaggerUi from "swagger-ui-express";
-import helmet from "helmet"; // <--- 1. Import Helmet
+import helmet from "helmet";
+import compression from "compression"; // <--- Point 5: Compression
+import rateLimit from "express-rate-limit"; // <--- Point 4: Rate Limiting
 
 import { generateOpenAPISpec } from "./docs/openapi.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
@@ -17,11 +19,29 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-/* ===================== SECURITY MIDDLEWARE ===================== */
+/* ===================== SECURITY & PERF MIDDLEWARE ===================== */
 
-// 2. Use Helmet FIRST (protects against XSS, sniffing, etc.)
+// Point 5: Compress responses (Speed)
+app.use(compression());
+
+// Point 3: Production Logging (Cleaner logs)
+const logFormat = process.env.NODE_ENV === "production" ? "combined" : "dev";
+app.use(morgan(logFormat));
+
+// Point 4: Rate Limiting (Security)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: { success: false, message: "Too many requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+// Apply rate limiting to all API routes
+app.use("/api", limiter);
+
+// Helmet (Security Headers)
 app.use(helmet({
-  crossOriginResourcePolicy: false, // Allows loading images from /uploads
+  crossOriginResourcePolicy: false,
 }));
 
 /* ===================== GLOBAL MIDDLEWARES ===================== */
@@ -35,12 +55,6 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(morgan("dev"));
-
-/* ===================== IMPORT DOCS ===================== */
-
-import "./docs/auth.docs.js";
-import "./docs/posts.docs.js";
 
 /* ===================== SWAGGER ===================== */
 
@@ -64,6 +78,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
 
+// Keep this for local dev, but production uses Cloudinary
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 /* ===================== ERROR HANDLER ===================== */
