@@ -36,11 +36,22 @@ jobs:
     - name: Run Backend Tests
       env:
         MONGO_URI: mongodb://localhost:27017/test_db
-        JWT_SECRET: "test_secret_123"
-        # 👇 ADDED THESE LINES TO FIX THE 500 ERROR
-        JWT_EXPIRE: "30d"
-        COOKIE_EXPIRE: "30"
         NODE_ENV: "test"
+        PORT: 3000
+        
+        # --- AUTH SECRETS (Matches your .env) ---
+        JWT_SECRET: "DevConnect_Test_Secret"
+        JWT_REFRESH_SECRET: "DevConnect_Test_Refresh_Secret" # 👈 THIS WAS THE MISSING KEY!
+
+        # --- CLOUDINARY (Dummy values to prevent crashes) ---
+        CLOUDINARY_CLOUD_NAME: "test_cloud_name"
+        CLOUDINARY_API_KEY: "1234567890"
+        CLOUDINARY_API_SECRET: "test_api_secret"
+
+        # --- URL CONFIGS ---
+        FRONTEND_URL: "http://localhost:5174"
+        CLIENT_URL: "http://localhost:5173"
+        
       run: cd BACKEND && npm run test
 
   # JOB 2: Build Frontend
