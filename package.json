@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run dev --prefix BACKEND\" \"npm run dev --prefix FRONTEND\"",
     "server": "npm run server --prefix BACKEND",
     "client": "npm run dev --prefix FRONTEND",
-    "test": "concurrently \"npm test --prefix BACKEND\" \"npm test --prefix FRONTEND\"",
+   "test": "cross-env NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --forceExit",
     "test:backend": "npm test --prefix BACKEND",
     "test:frontend": "npm test --prefix FRONTEND"
   },
