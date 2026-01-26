@@ -30,7 +30,6 @@ jobs:
     - name: Install All Dependencies
       run: |
         npm install
-        # Use parentheses ( ) to run in a sub-shell so we don't get stuck!
         (cd BACKEND && npm install)
         (cd FRONTEND && npm install)
 
@@ -38,6 +37,9 @@ jobs:
       env:
         MONGO_URI: mongodb://localhost:27017/test_db
         JWT_SECRET: "test_secret_123"
+        # 👇 ADDED THESE LINES TO FIX THE 500 ERROR
+        JWT_EXPIRE: "30d"
+        COOKIE_EXPIRE: "30"
         NODE_ENV: "test"
       run: cd BACKEND && npm run test
 
