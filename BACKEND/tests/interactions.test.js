@@ -14,11 +14,11 @@ describe("Social Interactions (Likes & Comments)", () => {
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(process.env.MONGO_URI);
     }
-    // Cleanup
+   
     await User.deleteMany({ email: /interaction/ });
     await Post.deleteMany({});
 
-    // 1. Register & Login
+   
     await agent.post("/api/auth/register").send({
       username: "interactor",
       email: "interaction@test.com",
@@ -30,19 +30,19 @@ describe("Social Interactions (Likes & Comments)", () => {
       password: "Password123"
     });
     
-    // Capture Cookie
+   
     const cookies = loginRes.headers['set-cookie'];
     if (cookies) cookieString = cookies[0].split(';')[0];
     
     userId = loginRes.body.data.user._id;
 
-    // 2. Create Post
+    
     const postRes = await agent
       .post("/api/posts")
       .set("Cookie", cookieString)
       .send({ content: "Post to be liked" });
 
-    // Extract ID safely
+    
     const body = postRes.body;
     const postObj = body.data?.post || body.data || body.post;
     
@@ -57,7 +57,7 @@ describe("Social Interactions (Likes & Comments)", () => {
     await mongoose.connection.close();
   });
 
-  // Helper to extract likes array
+  
   const getLikes = (res) => {
     const data = res.body.data?.post || res.body.data || res.body.post || res.body;
     return data ? (data.likes || []) : [];
@@ -93,10 +93,10 @@ describe("Social Interactions (Likes & Comments)", () => {
       .set("Cookie", cookieString)
       .send({ text: "Test comment" });
 
-    // 👇 FIX: Changed from 201 to 200 to match your server
+    
     expect(res.statusCode).toBe(200);
     
-    // Verify comment exists
+    
     const data = res.body.data?.post || res.body.data || res.body.post;
     const comments = Array.isArray(data) ? data : (data.comments || []);
     

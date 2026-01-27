@@ -22,7 +22,7 @@ import {
 
 const router = express.Router();
 
-/* ===================== AUTH ===================== */
+//AUTH
 
 // Register
 router.post(
@@ -56,7 +56,7 @@ router.get("/me", authMiddleware, getMe);
 // Logout
 router.post("/logout", authMiddleware, logoutUser);
 
-/* ===================== PASSWORD ===================== */
+//PASSWORD
 
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);

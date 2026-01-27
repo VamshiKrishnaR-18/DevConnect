@@ -6,21 +6,23 @@ import catchAsync from "../utils/catchAsync.js";
 import {
   followUserService,
   unfollowUserService,
-  updateProfilePicService, // <--- Import the new service
+  updateProfilePicService,
 } from "../services/user.service.js";
 
 import { SOCKET_EVENTS } from "../constants/socketEvents.js";
 import { emitSocketEvent } from "../utils/emitSocketEvent.js";
 
-/* ===================== GET PROFILE ===================== */
+
+//GET PROFILE
 export const getProfile = catchAsync(async (req, res, next) => {
   const { username } = req.params;
 
   const user = await userModel
     .findOne({ username })
     .select("-password")
-    .populate("followers", "username profilePic")
-    .populate("following", "username profilePic");
+    
+    .populate("followers", "username profilepic profilePic") 
+    .populate("following", "username profilepic profilePic");
 
   if (!user) {
     return next(new AppError("User not found", 404, "USER_NOT_FOUND"));
@@ -28,7 +30,8 @@ export const getProfile = catchAsync(async (req, res, next) => {
 
   const posts = await postModel
     .find({ user: user._id })
-    .populate("user", "username profilepic")
+  
+    .populate("user", "username profilepic profilePic") 
     .sort({ createdAt: -1 });
 
   res.status(200).json({
@@ -41,7 +44,9 @@ export const getProfile = catchAsync(async (req, res, next) => {
   });
 });
 
-/* ===================== FOLLOW USER ===================== */
+
+
+//FOLLOW USER
 export const followUser = catchAsync(async (req, res) => {
   const result = await followUserService({
     currentUserId: req.user._id,
@@ -64,7 +69,7 @@ export const followUser = catchAsync(async (req, res) => {
   });
 });
 
-/* ===================== UNFOLLOW USER ===================== */
+//UNFOLLOW USER
 export const unFollowUser = catchAsync(async (req, res) => {
   const result = await unfollowUserService({
     currentUserId: req.user._id,
@@ -87,22 +92,12 @@ export const unFollowUser = catchAsync(async (req, res) => {
   });
 });
 
-/* ===================== UPDATE PROFILE PIC ===================== */
+
+
+//UPDATE PROFILE PIC
 export const updateProfilePic = async (req, res) => {
   try {
-    console.log("--> CONTROLLER: Entering updateProfilePic");
-    console.log("--> CONTROLLER: User ID:", req.user ? req.user._id : "UNDEFINED");
-    
-    if (req.file) {
-      console.log("--> CONTROLLER: File received:", req.file.path);
-      console.log("--> CONTROLLER: Filename (publicId):", req.file.filename);
-    } else {
-      console.error("--> CONTROLLER ERROR: No file in req.file!");
-    }
-
     const updatedUser = await updateProfilePicService(req.user._id, req.file);
-
-    console.log("--> CONTROLLER: Service call successful");
 
     res.status(200).json({
       success: true,
@@ -113,32 +108,78 @@ export const updateProfilePic = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ CRITICAL ERROR IN CONTROLLER ❌");
-    console.error(error);
+    console.error("Error updating profile pic:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 
-/* ===================== SEARCH USERS ===================== */
+//SEARCH USERS
 export const searchUsers = catchAsync(async (req, res) => {
   const { query } = req.query;
   
-  // If empty query, return empty list
   if (!query || query.trim() === "") {
     return res.status(200).json({ success: true, data: [] });
   }
 
-  // Find users where username matches query (case-insensitive)
   const users = await userModel
     .find({
       username: { $regex: query, $options: "i" },
     })
-    .select("username profilepic") // Only return necessary info
-    .limit(10); // Limit results to avoid crashing the UI
+    .select("username profilepic profilePic")
+    .limit(10); 
 
   res.status(200).json({
     success: true,
     data: users,
+  });
+});
+
+
+
+//UPDATE USER PROFILE
+export const updateProfile = catchAsync(async (req, res) => {
+  const { username, bio } = req.body;
+  
+  if (!username) throw new AppError("Username cannot be empty", 400);
+
+  if (username !== req.user.username) {
+    const existing = await userModel.findOne({ username });
+    if (existing) throw new AppError("Username already taken", 400);
+  }
+
+  const updatedUser = await userModel.findByIdAndUpdate(
+    req.user._id,
+    { username, bio },
+    { new: true, runValidators: true }
+  ).select("-password");
+
+  res.status(200).json({
+    success: true,
+    message: "Profile updated successfully",
+    data: updatedUser,
+  });
+});
+
+
+
+//UPDATE COVER PIC
+export const updateCoverPic = catchAsync(async (req, res, next) => {
+  if (!req.file) {
+    return next(new AppError("No image file provided", 400));
+  }
+
+  const coverUrl = req.file.path; 
+
+  const updatedUser = await userModel.findByIdAndUpdate(
+    req.user._id,
+    { coverPic: coverUrl },
+    { new: true }
+  ).select("-password");
+
+  res.status(200).json({
+    success: true,
+    message: "Cover photo updated successfully",
+    data: updatedUser,
   });
 });

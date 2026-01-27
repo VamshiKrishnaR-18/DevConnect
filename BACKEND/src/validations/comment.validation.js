@@ -4,7 +4,7 @@ const objectId = z
   .string()
   .regex(/^[0-9a-fA-F]{24}$/, "Invalid ID format");
 
-/* ===================== ADD COMMENT ===================== */
+//ADD COMMENT
 export const addCommentSchema = z.object({
   body: z.object({
     postId: objectId,
@@ -15,14 +15,14 @@ export const addCommentSchema = z.object({
   }),
 });
 
-/* ===================== GET COMMENTS ===================== */
+//GET COMMENTS
 export const getCommentsSchema = z.object({
   params: z.object({
     postId: objectId,
   }),
 });
 
-/* ===================== DELETE COMMENT ===================== */
+//DELETE COMMENT
 export const deleteCommentSchema = z.object({
   params: z.object({
     commentId: objectId,

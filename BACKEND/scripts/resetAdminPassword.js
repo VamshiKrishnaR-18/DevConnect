@@ -13,7 +13,7 @@ const resetAdminPassword = async () => {
     console.log("✅ Connected to MongoDB");
 
     // New password for admin
-    const newPassword = "admin123"; // Change this to your desired password
+    const newPassword = "admin123";
 
     // Find admin user
     const adminUser = await userModel.findOne({
@@ -50,5 +50,4 @@ const resetAdminPassword = async () => {
   }
 };
 
-// Run the script
 resetAdminPassword();

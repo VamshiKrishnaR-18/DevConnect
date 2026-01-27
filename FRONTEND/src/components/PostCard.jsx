@@ -5,7 +5,6 @@ import api from "../utils/api";
 import { MessageCircle, Send, Trash2 } from "lucide-react"; 
 import { getProfileImageSrc } from "../utils/imageUtils";
 
-// Helper to fix image URLs
 const getMediaUrl = (url) => {
   if (!url) return null;
   if (url.includes("D:/") || url.includes("C:/") || url.includes("\\")) return null;
@@ -15,7 +14,6 @@ const getMediaUrl = (url) => {
   return url;
 };
 
-// Added 'showDelete' prop (default false)
 const PostCard = ({ post: initialPost, onDelete, showDelete = false }) => {
   const { user } = useContext(AuthContext);
   
@@ -39,10 +37,17 @@ const PostCard = ({ post: initialPost, onDelete, showDelete = false }) => {
     setSubmittingComment(true);
     try {
       const res = await api.post(`/posts/${post._id}/comment`, { text: commentText });
+      
+      // 👇 FIX 1: Correctly Append the New Comment
+      // The backend returns the SINGLE new comment object in res.data.data
+      const newComment = res.data.data; 
+
       setPost((prev) => ({
         ...prev,
-        comments: res.data.comments || res.data.data.comments
+        // Safely append new comment to existing array
+        comments: [...(prev.comments || []), newComment]
       }));
+      
       setCommentText("");
     } catch (err) {
       console.error("Comment failed", err);
@@ -88,20 +93,14 @@ const PostCard = ({ post: initialPost, onDelete, showDelete = false }) => {
             <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                 {post.user?.username || "Unknown User"}
             </h3>
-            {/* Date and Time Display */}
             <p className="text-xs text-gray-500 dark:text-gray-400">
                 {post.createdAt ? new Date(post.createdAt).toLocaleString(undefined, {
-                    year: 'numeric',
-                    month: 'short', 
-                    day: 'numeric', 
-                    hour: '2-digit', 
-                    minute: '2-digit'
+                    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                 }) : ""}
             </p>
             </div>
         </div>
 
-        {/* Delete Button: Only checks isOwner AND showDelete prop */}
         {isOwner && showDelete && (
             <button 
                 onClick={handleDelete}
@@ -136,37 +135,24 @@ const PostCard = ({ post: initialPost, onDelete, showDelete = false }) => {
         </div>
       )}
 
-      {/* --- ACTIONS BAR (50/50 Split) --- */}
+      {/* Actions */}
       <div className="grid grid-cols-2 border-y border-gray-100 dark:border-gray-700/50 mt-3">
         <div className="border-r border-gray-100 dark:border-gray-700/50">
-           <LikeButton 
-                post={post} 
-                userId={user?._id} 
-                onLike={handleLikeUpdate} 
-           />
+           <LikeButton post={post} userId={user?._id} onLike={handleLikeUpdate} />
         </div>
         <button
           onClick={() => setShowComments(!showComments)}
           className="group flex items-center justify-center py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors w-full"
         >
-          <MessageCircle 
-            size={24} 
-            strokeWidth={2}
-            className="text-gray-500 dark:text-gray-400 group-hover:text-blue-500 transition-colors"
-          />
+          <MessageCircle size={24} className="text-gray-500 dark:text-gray-400 group-hover:text-blue-500 transition-colors" />
         </button>
       </div>
 
-      {/* --- COUNTS SECTION --- */}
+      {/* Counts */}
       <div className="px-4 py-2 flex items-center gap-3">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-          {post.likes?.length || 0} likes
-        </p>
+        <p className="text-sm font-semibold text-gray-900 dark:text-white">{post.likes?.length || 0} likes</p>
         <span className="text-gray-300 dark:text-gray-600">•</span>
-        <button 
-          onClick={() => setShowComments(!showComments)}
-          className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors"
-        >
+        <button onClick={() => setShowComments(!showComments)} className="text-sm text-gray-500 dark:text-gray-400 hover:underline">
           {post.comments?.length || 0} comments
         </button>
       </div>
@@ -180,7 +166,12 @@ const PostCard = ({ post: initialPost, onDelete, showDelete = false }) => {
                 <span className="font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                   {comment.user?.username || "User"}:
                 </span>
-                <p className="text-gray-700 dark:text-gray-300 break-words">{comment.text}</p>
+                
+                {/* 👇 FIX 2: Changed from comment.text to comment.content */}
+                <p className="text-gray-700 dark:text-gray-300 break-words">
+                  {comment.content || comment.text} 
+                </p>
+
               </div>
             ))}
             {(!post.comments || post.comments.length === 0) && (
@@ -191,7 +182,7 @@ const PostCard = ({ post: initialPost, onDelete, showDelete = false }) => {
             <input
               type="text"
               placeholder="Add a comment..."
-              className="w-full pl-4 pr-10 py-2.5 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"
+              className="w-full pl-4 pr-10 py-2.5 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit()}

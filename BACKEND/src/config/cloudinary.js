@@ -19,12 +19,12 @@ export const profilePicStorage = new CloudinaryStorage({
   },
 });
 
-// 2. Storage for Post Media (REQUIRED FOR POSTS)
+// 2. Storage for Post Media
 export const postMediaStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: "devconnect/posts",
     allowed_formats: ["jpg", "png", "jpeg", "webp", "mp4", "mov", "avi"],
-    resource_type: "auto", // Important: Allows both images and videos
+    resource_type: "auto",
   },
 });

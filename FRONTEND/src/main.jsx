@@ -10,8 +10,17 @@ import AuthProvider from "./contexts/AuthProvider.jsx";
 import { SocketProvider } from "./contexts/SocketProvider.jsx";
 import { NotificationProvider } from "./contexts/NotificationProvider.jsx";
 
-// 2. Create the Query Client
-const queryClient = new QueryClient()
+// 2. Create the Query Client (FIXED CONFIGURATION)
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // 🛑 CRITICAL FIX: Stop auto-retrying on error. 
+      // This prevents the infinite loop when Auth fails.
+      retry: false, 
+      refetchOnWindowFocus: false, 
+    },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

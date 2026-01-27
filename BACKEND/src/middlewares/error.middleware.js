@@ -3,7 +3,7 @@ import AppError from "../utils/AppError.js";
 const errorHandler = (err, req, res, next) => {
   let error = err;
 
-  /* ===================== MONGOOSE ERRORS ===================== */
+  //MONGOOSE ERRORS
 
   // Invalid ObjectId
   if (err.name === "CastError") {
@@ -24,7 +24,7 @@ const errorHandler = (err, req, res, next) => {
     );
   }
 
-  /* ===================== JWT ERRORS ===================== */
+  //JWT ERRORS
 
   if (err.name === "JsonWebTokenError") {
     error = new AppError(
@@ -42,7 +42,7 @@ const errorHandler = (err, req, res, next) => {
     );
   }
 
-  /* ===================== DEFAULT ===================== */
+  //DEFAULT
 
   const statusCode = error.statusCode || 500;
 

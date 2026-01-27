@@ -31,30 +31,31 @@ const userSchema = new mongoose.Schema(
       url: { type: String, default: "" },
       publicId: { type: String, default: "" },
     },
+    coverPic: { type: String, default: "" },
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     bio: { type: String, default: "" },
     
-    // 👇 ADDED MISSING FIELDS 👇
+    
     refreshToken: String,
     refreshTokenExpiresAt: Date,
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    isBanned: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-/* ===================== PASSWORD HASHING HOOK ===================== */
-// This runs automatically before .save() or .create()
+
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   
-  // Hash the password with cost of 12
+  
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 
-/* ===================== COMPARE PASSWORD METHOD ===================== */
+
 userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword

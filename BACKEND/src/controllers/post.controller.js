@@ -1,8 +1,9 @@
 import postModel from "../models/Post.model.js";
 import AppError from "../utils/AppError.js";
 import catchAsync from "../utils/catchAsync.js";
+import Comment from "../models/Comment.model.js";
 
-// FIX: Added missing imports for media, delete, and like services
+
 import {
   createPost,
   createPostWithMedia,
@@ -14,7 +15,9 @@ import {
 import { SOCKET_EVENTS } from "../constants/socketEvents.js";
 import { emitSocketEvent } from "../utils/emitSocketEvent.js";
 
-/* ===================== CREATE POST (TEXT) ===================== */
+
+
+//CREATE POST (TEXT)
 
 export const createTextPost = catchAsync(async (req, res) => {
   const post = await createPost({
@@ -34,7 +37,9 @@ export const createTextPost = catchAsync(async (req, res) => {
   });
 });
 
-/* ===================== CREATE POST (MEDIA) ===================== */
+
+
+//CREATE POST (MEDIA)
 
 export const createMediaPost = async (req, res, next) => {
   try {
@@ -42,7 +47,7 @@ export const createMediaPost = async (req, res, next) => {
     console.log("--> Files received:", req.files ? req.files.length : "None");
     console.log("--> Body content:", req.body.content);
 
-    // Call the service
+  
     const post = await createPostWithMedia({
       userId: req.user._id,
       content: req.body.content,
@@ -60,35 +65,42 @@ export const createMediaPost = async (req, res, next) => {
       data: { post },
     });
   } catch (error) {
-    // THIS IS THE IMPORTANT PART
+    
     console.error("❌ CRITICAL ERROR IN CREATE MEDIA POST ❌");
-    console.error(error); // This prints the full error object
+    console.error(error);
     console.error("------------------------------------------");
     
-    // Send 500
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 
-/* ===================== GET ALL POSTS ===================== */
+
+
+//GET ALL POSTS
 export const getAllPosts = catchAsync(async (req, res, next) => {
-  // 1. Get page and limit from query params (default to page 1, limit 10)
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  // 2. Get total count so frontend knows when to stop scrolling
   const totalPosts = await postModel.countDocuments();
 
-  // 3. Fetch only the requested slice
   const posts = await postModel
     .find()
-    // CRITICAL: Must populate 'user' and include 'profilepic'
-    .populate("user", "username profilepic") 
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    
+    .populate("user", "username profilepic") 
+    
+    .populate({
+      path: "comments",
+      select: "content createdAt",
+      populate: {
+        path: "user",
+        select: "username profilepic" 
+      }
+    });
 
   res.status(200).json({
     success: true,
@@ -105,7 +117,9 @@ export const getAllPosts = catchAsync(async (req, res, next) => {
   });
 });
 
-/* ===================== GET POST BY ID ===================== */
+
+
+//GET POST BY ID
 
 export const getPostById = catchAsync(async (req, res, next) => {
   const post = await postModel
@@ -125,10 +139,12 @@ export const getPostById = catchAsync(async (req, res, next) => {
   });
 });
 
-/* ===================== DELETE POST ===================== */
+
+
+//DELETE POST
 
 export const deletePost = catchAsync(async (req, res) => {
-  // deletePostService is now imported and will work
+
   const result = await deletePostService({
     postId: req.params.id,
     userId: req.user._id,
@@ -145,19 +161,21 @@ export const deletePost = catchAsync(async (req, res) => {
   });
 });
 
-/* ===================== TOGGLE LIKE ===================== */
+
+
+//TOGGLE LIKE
 export const toggleLike = catchAsync(async (req, res) => {
-  // 1. Get IO instance FIRST
+  
   const io = req.app.get("io");
 
-  // 2. Pass 'io' to the service
+  
   const result = await toggleLikeService({
     postId: req.params.postId,
     userId: req.user._id,
-    io: io // <--- PASS IT HERE
+    io: io 
   });
 
-  // (You can remove the manual emitSocketEvent here if the service handles notifications now)
+  
 
   res.status(200).json({
     success: true,
@@ -166,22 +184,36 @@ export const toggleLike = catchAsync(async (req, res) => {
   });
 });
 
-/* ===================== ADD COMMENT ===================== */
-export const addComment = catchAsync(async (req, res) => {
-  // 1. Get IO instance FIRST
-  const io = req.app.get("io");
 
-  // 2. Pass 'io' to the service
-  const comments = await addCommentService({
-    postId: req.params.postId,
-    userId: req.user._id,
-    text: req.body.text,
-    io: io // <--- PASS IT HERE
+
+//ADD COMMENT
+export const addComment = catchAsync(async (req, res, next) => {
+  const { postId } = req.params;
+  const { text } = req.body;
+
+  if (!text) return next(new AppError("Comment text is required", 400));
+
+  
+  const post = await postModel.findById(postId);
+  if (!post) return next(new AppError("Post not found", 404));
+
+  
+  const newComment = await Comment.create({
+    content: text,       
+    post: postId,
+    user: req.user._id,
   });
 
-  res.status(200).json({
+  
+  post.comments.push(newComment._id);
+  await post.save();
+
+  
+  await newComment.populate("user", "username profilepic");
+
+  res.status(201).json({
     success: true,
-    message: "Comment added",
-    data: { comments },
+    data: newComment, 
+    message: "Comment added successfully"
   });
 });

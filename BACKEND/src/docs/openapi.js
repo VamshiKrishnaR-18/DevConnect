@@ -5,7 +5,7 @@ import {
   extendZodWithOpenApi,
 } from "@asteasolutions/zod-to-openapi";
 
-// REQUIRED: extend Zod once, globally
+
 extendZodWithOpenApi(z);
 
 export const registry = new OpenAPIRegistry();

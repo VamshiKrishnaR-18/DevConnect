@@ -1,4 +1,4 @@
-// src/services/auth.service.js
+
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -10,14 +10,14 @@ import {
   signRefreshToken,
 } from "../utils/token.js";
 
-/* ===================== CONSTANTS ===================== */
+//CONSTANTS
 
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 
 
-/* ===================== LOGIN ===================== */
+//LOGIN
 
 export const loginUserService = async ({ email, password, role }) => {
   const query = role ? { email, role } : { email };

@@ -21,7 +21,6 @@ import {
 
 const router = express.Router();
 
-/* ===================== ROUTES ===================== */
 
 // Get all posts
 router.get(
@@ -56,7 +55,6 @@ router.delete(
   deletePost
 );
 
-/* ===================== NEW ROUTES (Fixes 404) ===================== */
 
 // Toggle Like
 router.post(

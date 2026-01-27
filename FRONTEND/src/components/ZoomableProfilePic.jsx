@@ -35,10 +35,11 @@ function ZoomableProfilePic({
   return (
     <>
       {/* Profile Picture */}
-      <div className="relative group">
+      <div className="relative group inline-block">
         <div
           className={`${sizeClasses[size]} rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg cursor-pointer transition-transform duration-300 hover:scale-105`}
           onClick={handleImageClick}
+          title="Click to view"
         >
           <img
             src={getProfileImageSrc(profilePic)}
@@ -49,49 +50,38 @@ function ZoomableProfilePic({
             }}
           />
         </div>
-
-        {/* Edit Icon Overlay - Only show for own profile */}
-        {isOwnProfile && (
-          <button
-            onClick={handleEditClick}
-            className="absolute bottom-0 right-0 bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full p-2 shadow-lg transition-all duration-300 transform hover:scale-110"
-            title="Change profile picture"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-          </button>
-        )}
       </div>
 
       {/* Zoom Modal */}
       {isZoomed && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[80] p-4 animate-in fade-in duration-200">
+          
           {/* Close Button */}
           <button
             onClick={handleCloseZoom}
-            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+            className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-20 p-2"
           >
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
-          {/* Edit Button - Only show for own profile */}
-          {isOwnProfile && (
+          {/* Edit Photo Button (Top Left) */}
+          {isOwnProfile && !showEditOptions && (
             <button
               onClick={handleEditClick}
-              className="absolute top-4 left-4 bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors z-10"
+              className="absolute top-4 left-4 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full flex items-center gap-2 transition-all backdrop-blur-md border border-white/20 z-20"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span>Edit</span>
+              <span className="text-sm font-medium">Change Photo</span>
             </button>
           )}
 
           {/* Zoomed Image */}
-          <div className="relative max-w-4xl max-h-full">
+          <div className="relative max-w-4xl max-h-[80vh] w-full flex justify-center">
             <img
               src={getProfileImageSrc(profilePic)}
               alt={`${username}'s profile`}
@@ -104,20 +94,25 @@ function ZoomableProfilePic({
 
           {/* Edit Options Panel */}
           {showEditOptions && isOwnProfile && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg p-6 shadow-2xl max-w-sm w-full mx-4">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Change Profile Picture
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4 border border-gray-100 dark:border-gray-700 animate-in slide-in-from-bottom-4">
+              {/* FLEX COL FIX: Stacks items vertically */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                  Update Profile Picture
                 </h3>
-                <MinimalProfilePicUploader
-                  onUpload={(url) => {
-                    onUpload(url);
-                    handleCloseZoom();
-                  }}
-                />
+                
+                <div className="mb-2">
+                  <MinimalProfilePicUploader
+                    onUpload={(url) => {
+                      onUpload(url);
+                      handleCloseZoom();
+                    }}
+                  />
+                </div>
+                
                 <button
                   onClick={() => setShowEditOptions(false)}
-                  className="mt-4 text-gray-500 hover:text-gray-700 text-sm transition-colors"
+                  className="mt-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-sm font-medium transition-colors px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                 >
                   Cancel
                 </button>

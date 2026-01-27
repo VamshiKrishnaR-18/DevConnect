@@ -22,7 +22,7 @@ const notificationSchema = new mongoose.Schema(
       required: true,
     },
     link: {
-      type: String, // e.g., "/post/123" or "/profile/username"
+      type: String,
       default: "",
     },
     read: {

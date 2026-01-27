@@ -2,7 +2,8 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.model.js";
 
 const adminProtect = async (req, res, next) => {
-  const token = req.cookies?.token;
+  
+  const token = req.cookies?.accessToken;
 
   if (!token)
     return res.status(401).json({ msg: "Not authenticated" });

@@ -1,7 +1,7 @@
 import { registry } from "./openapi.js";
 import { registerSchema, loginSchema } from "../validations/auth.validation.js";
 
-/* ================== REGISTER ================== */
+//REGISTER
 registry.registerPath({
   method: "post",
   path: "/auth/register",
@@ -25,7 +25,9 @@ registry.registerPath({
   },
 });
 
-/* ================== LOGIN ================== */
+
+
+//LOGIN
 registry.registerPath({
   method: "post",
   path: "/auth/login",

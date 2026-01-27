@@ -1,7 +1,7 @@
 import Notification from "../models/Notification.model.js";
 import { emitSocketEvent } from "../utils/emitSocketEvent.js";
 
-/* ===================== CREATE NOTIFICATION ===================== */
+//CREATE NOTIFICATION
 export const createNotification = async ({ recipient, sender, type, message, link, io }) => {
   try {
     const notification = await Notification.create({
@@ -13,9 +13,9 @@ export const createNotification = async ({ recipient, sender, type, message, lin
       read: false
     });
 
-    // FIX: Send Real-time Update
+    
     if (io) {
-      // The event name must match what NotificationProvider.jsx expects ("notification:new")
+      
       emitSocketEvent(io, "notification:new", notification);
     }
     
@@ -25,15 +25,15 @@ export const createNotification = async ({ recipient, sender, type, message, lin
   }
 };
 
-/* ===================== GET USER NOTIFICATIONS ===================== */
+//GET USER NOTIFICATIONS
 export const getUserNotificationsService = async (userId) => {
   return await Notification.find({ recipient: userId })
-    .sort({ createdAt: -1 }) // Newest first
-    .populate("sender", "username profilepic") // Show who did it
+    .sort({ createdAt: -1 })
+    .populate("sender", "username profilepic")
     .limit(50);
 };
 
-/* ===================== MARK AS READ ===================== */
+//MARK AS READ
 export const markNotificationsReadService = async (userId) => {
   await Notification.updateMany(
     { recipient: userId, read: false },

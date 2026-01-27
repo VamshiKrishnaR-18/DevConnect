@@ -1,207 +1,229 @@
-import userModel from "../models/User.model.js";
-import postModel from "../models/Post.model.js";
+
+import User from "../models/User.model.js";
+import Post from "../models/Post.model.js";
+import catchAsync from "../utils/catchAsync.js"; 
 import AppError from "../utils/AppError.js";
-import catchAsync from "../utils/catchAsync.js";
 
-/* ===================== USERS ===================== */
+import Comment from "../models/Comment.model.js";
 
-export const getUsers = catchAsync(async (req, res) => {
-  const users = await userModel.find().select("-password");
+import { SystemSetting } from "../models/SystemSetting.model.js";
+import { AuditLog } from "../models/AuditLog.model.js";
 
-  res.status(200).json({
-    success: true,
-    data: { users },
-  });
-});
 
-export const deleteUser = catchAsync(async (req, res, next) => {
-  const { userId } = req.params;
-
-  const user = await userModel.findById(userId);
-  if (!user) {
-    return next(new AppError("User not found", 404, "USER_NOT_FOUND"));
-  }
-
-  if (user.role === "admin") {
-    return next(
-      new AppError(
-        "Cannot delete admin users",
-        403,
-        "ADMIN_DELETE_FORBIDDEN"
-      )
-    );
-  }
-
-  await user.deleteOne();
-
-  res.status(200).json({
-    success: true,
-    message: "User deleted successfully",
-  });
-});
-
-/* ===================== DASHBOARD ===================== */
-
+//  DASHBOARD STATS 
 export const getDashboardStats = catchAsync(async (req, res) => {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const totalUsers = await User.countDocuments();
+  const totalPosts = await Post.countDocuments();
+  const activeUsers = await User.countDocuments({ isBanned: false });
+  
+  // Fetch logs for the dashboard widget
+  const recentActivity = await AuditLog.find()
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .populate("adminId", "username");
 
-  const [totalUsers, activeUsers, totalPosts] = await Promise.all([
-    userModel.countDocuments(),
-    userModel.countDocuments({ lastLogin: { $gte: thirtyDaysAgo } }),
-    postModel.countDocuments(),
-  ]);
+  res.json({ success: true, data: { totalUsers, totalPosts, activeUsers, recentActivity } });
+});
 
-  res.status(200).json({
+// RECENT ACTIVITY 
+export const getRecentActivity = catchAsync(async (req, res) => {
+  const activities = await AuditLog.find()
+    .sort({ createdAt: -1 })
+    .limit(10)
+    .populate("adminId", "username");
+
+  res.json({ success: true, data: { activities } });
+});
+
+// USER MANAGEMENT 
+export const getUsers = catchAsync(async (req, res) => {
+  const { page = 1, limit = 10, search = "" } = req.query;
+  
+  const query = {
+    $or: [
+      { username: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } }
+    ]
+  };
+
+  const users = await User.find(query)
+    .select("-password")
+    .limit(limit * 1)
+    .skip((page - 1) * limit)
+    .sort({ createdAt: -1 });
+
+  const count = await User.countDocuments(query);
+
+  res.json({
     success: true,
     data: {
-      stats: {
-        totalUsers,
-        totalPosts,
-        activeUsers,
-        publishedPosts: totalPosts,
-      },
-    },
+      users,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page
+    }
   });
 });
 
-/* ===================== ACTIVITY ===================== */
+export const banUser = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+  const { reason } = req.body;
 
-export const getRecentActivity = catchAsync(async (req, res) => {
-  const [recentUsers, recentPosts] = await Promise.all([
-    userModel
-      .find()
-      .select("username email createdAt")
-      .sort({ createdAt: -1 })
-      .limit(5),
+  const user = await User.findById(userId);
+  if (!user) throw new AppError("User not found", 404);
+  if (user.role === "admin") throw new AppError("Cannot ban an admin", 403);
 
-    postModel
-      .find()
-      .populate("user", "username")
-      .select("content user createdAt")
-      .sort({ createdAt: -1 })
-      .limit(5),
-  ]);
+  user.isBanned = !user.isBanned; // Toggle ban
+  await user.save();
 
-  const activities = [
-    ...recentUsers.map((user) => ({
-      type: "user_registered",
-      message: `New user registered: ${user.email}`,
-      timestamp: user.createdAt,
-      user: user.username,
-    })),
-    ...recentPosts.map((post) => ({
-      type: "post_created",
-      message: `Post published: "${post.content.slice(0, 50)}${
-        post.content.length > 50 ? "..." : ""
-      }"`,
-      timestamp: post.createdAt,
-      user: post.user.username,
-    })),
-  ]
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 10);
-
-  res.status(200).json({
-    success: true,
-    data: { activities },
+  await AuditLog.create({
+    adminId: req.user._id,
+    action: user.isBanned ? "BAN_USER" : "UNBAN_USER",
+    targetId: userId,
+    details: reason || "No reason provided"
   });
+
+  res.json({ success: true, message: `User ${user.isBanned ? "banned" : "unbanned"}` });
 });
 
-/* ===================== POSTS ===================== */
+// Backward compatibility
+export const deleteUser = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+  const user = await User.findByIdAndDelete(userId);
+  
+  if (!user) throw new AppError("User not found", 404);
 
+  await AuditLog.create({
+    adminId: req.user._id,
+    action: "DELETE_USER",
+    targetId: userId,
+    details: "Hard delete performed by admin"
+  });
+
+  res.json({ success: true, message: "User deleted permanently" });
+});
+
+// POST MANAGEMENT
 export const getPosts = catchAsync(async (req, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+  const { page = 1, limit = 10, search = "" } = req.query;
 
-  const [posts, totalPosts] = await Promise.all([
-    postModel
-      .find()
-      .populate("user", "username email profilepic")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit),
+  const users = await User.find({ username: { $regex: search, $options: "i" } }).select("_id");
+  const userIds = users.map(u => u._id);
 
-    postModel.countDocuments(),
-  ]);
+  const query = {
+    $or: [
+      { content: { $regex: search, $options: "i" } },
+      { user: { $in: userIds } }
+    ]
+  };
 
-  res.status(200).json({
+  const posts = await Post.find(query)
+    .populate("user", "username email profilepic")
+    .sort({ createdAt: -1 })
+    .limit(limit * 1)
+    .skip((page - 1) * limit);
+
+  const count = await Post.countDocuments(query);
+
+  res.json({
     success: true,
     data: {
       posts,
-      pagination: {
-        currentPage: page,
-        totalPages: Math.ceil(totalPosts / limit),
-        totalPosts,
-        hasNextPage: page * limit < totalPosts,
-        hasPrevPage: page > 1,
-      },
-    },
+      totalPages: Math.ceil(count / limit),
+      currentPage: page
+    }
   });
 });
 
-export const deletePost = catchAsync(async (req, res, next) => {
+export const deletePost = catchAsync(async (req, res) => {
   const { postId } = req.params;
+  const post = await Post.findByIdAndDelete(postId);
+  if (!post) throw new AppError("Post not found", 404);
 
-  const post = await postModel.findById(postId);
-  if (!post) {
-    return next(new AppError("Post not found", 404, "POST_NOT_FOUND"));
-  }
+  await Comment.deleteMany({ post: postId });
 
-  await post.deleteOne();
+  await AuditLog.create({
+    adminId: req.user._id,
+    action: "DELETE_POST",
+    targetId: postId,
+    details: `Deleted post by ${post.user}`
+  });
 
-  res.status(200).json({
+  res.json({ success: true, message: "Post and associated comments deleted" });
+});
+
+//COMMENT MANAGEMENT
+export const getComments = catchAsync(async (req, res) => {
+  const { page = 1, limit = 10, search = "" } = req.query;
+
+  const users = await User.find({ username: { $regex: search, $options: "i" } }).select("_id");
+  const userIds = users.map(u => u._id);
+
+  const query = {
+    $or: [
+      { content: { $regex: search, $options: "i" } },
+      { user: { $in: userIds } }
+    ]
+  };
+
+  const comments = await Comment.find(query)
+    .populate("user", "username profilepic")
+    .populate("post", "content") 
+    .sort({ createdAt: -1 })
+    .limit(limit * 1)
+    .skip((page - 1) * limit);
+
+  const count = await Comment.countDocuments(query);
+
+  res.json({
     success: true,
-    message: "Post deleted successfully",
+    data: {
+      comments,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page
+    }
   });
 });
 
-/* ===================== SETTINGS ===================== */
+export const deleteComment = catchAsync(async (req, res) => {
+  const { commentId } = req.params;
+  const comment = await Comment.findByIdAndDelete(commentId);
+  if (!comment) throw new AppError("Comment not found", 404);
 
-// Temporary in-memory store
-let systemSettings = {
-  siteName: "DevConnect",
-  siteDescription: "A platform for developers to connect and share",
-  sessionTimeout: 30,
-  maxLoginAttempts: 5,
-  maintenanceMode: false,
-  registrationEnabled: true,
-};
+  await Post.findByIdAndUpdate(comment.post, { $pull: { comments: commentId } });
 
-export const getSettings = catchAsync(async (req, res) => {
-  res.status(200).json({
-    success: true,
-    data: { settings: systemSettings },
+  await AuditLog.create({
+    adminId: req.user._id,
+    action: "DELETE_COMMENT",
+    targetId: commentId,
+    details: `Deleted comment: ${comment.content.substring(0, 20)}...`
   });
+
+  res.json({ success: true, message: "Comment deleted" });
+});
+
+// SETTINGS MANAGEMENT
+export const getSettings = catchAsync(async (req, res) => {
+  const settings = await SystemSetting.find();
+  const settingsMap = settings.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {});
+  res.json({ success: true, data: settingsMap });
 });
 
 export const updateSettings = catchAsync(async (req, res) => {
-  Object.assign(systemSettings, {
-    siteName: req.body.siteName ?? systemSettings.siteName,
-    siteDescription:
-      req.body.siteDescription ?? systemSettings.siteDescription,
-    sessionTimeout:
-      req.body.sessionTimeout !== undefined
-        ? Number(req.body.sessionTimeout)
-        : systemSettings.sessionTimeout,
-    maxLoginAttempts:
-      req.body.maxLoginAttempts !== undefined
-        ? Number(req.body.maxLoginAttempts)
-        : systemSettings.maxLoginAttempts,
-    maintenanceMode:
-      req.body.maintenanceMode !== undefined
-        ? Boolean(req.body.maintenanceMode)
-        : systemSettings.maintenanceMode,
-    registrationEnabled:
-      req.body.registrationEnabled !== undefined
-        ? Boolean(req.body.registrationEnabled)
-        : systemSettings.registrationEnabled,
+  const { key, value } = req.body;
+  
+  await SystemSetting.findOneAndUpdate(
+    { key },
+    { key, value, updatedBy: req.user._id },
+    { upsert: true, new: true }
+  );
+
+  await AuditLog.create({
+    adminId: req.user._id,
+    action: "UPDATE_SETTING",
+    details: `Changed ${key} to ${value}`
   });
 
-  res.status(200).json({
-    success: true,
-    message: "Settings updated successfully",
-    data: { settings: systemSettings },
-  });
+  res.json({ success: true, message: "Setting updated" });
 });
+
+export const getAllUsers = getUsers;

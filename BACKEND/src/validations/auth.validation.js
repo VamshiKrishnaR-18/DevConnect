@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { registry } from "../docs/openapi.js";
 
-/* ===================== REGISTER ===================== */
+//REGISTER
 
 export const registerSchema = z.object({
   body: z.object({
@@ -16,7 +16,7 @@ registry.register(
   registerSchema.shape.body
 );
 
-/* ===================== LOGIN ===================== */
+//LOGIN
 
 export const loginSchema = z.object({
   body: z.object({
@@ -30,7 +30,7 @@ registry.register(
   loginSchema.shape.body
 );
 
-/* ===================== FORGOT PASSWORD ===================== */
+//FORGOT PASSWORD
 
 export const forgotPasswordSchema = z.object({
   body: z.object({
@@ -43,7 +43,7 @@ registry.register(
   forgotPasswordSchema.shape.body
 );
 
-/* ===================== RESET PASSWORD ===================== */
+//RESET PASSWORD
 
 export const resetPasswordSchema = z.object({
   params: z.object({

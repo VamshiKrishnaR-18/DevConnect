@@ -2,7 +2,9 @@ import postModel from "../models/Post.model.js";
 import AppError from "../utils/AppError.js";
 import { createNotification } from "./notification.service.js"; // <--- 1. THIS WAS MISSING
 
-/* ===================== CREATE POST (TEXT ONLY) ===================== */
+
+
+//CREATE POST (TEXT ONLY)
 export const createPost = async ({ userId, content }) => {
   if (!content || !content.trim()) {
     throw new AppError("Post content is required", 400, "POST_CONTENT_REQUIRED");
@@ -17,15 +19,15 @@ export const createPost = async ({ userId, content }) => {
   return post;
 };
 
-/* ===================== CREATE POST (WITH MEDIA) ===================== */
+
+//CREATE POST (WITH MEDIA)
 export const createPostWithMedia = async ({ userId, content, files }) => {
   if ((!content || !content.trim()) && (!files || files.length === 0)) {
     throw new AppError("Post must have content or media", 400, "POST_EMPTY");
   }
 
   const media = files.map((file) => ({
-    // FIX: Don't use file.path (D:/...). Use a web URL.
-    // Assuming your server is on localhost:3000
+   
     url: `/uploads/${file.filename}`, 
     publicId: file.filename,
     type: file.mimetype.startsWith("video") ? "video" : "image",
@@ -40,7 +42,10 @@ export const createPostWithMedia = async ({ userId, content, files }) => {
   await post.populate("user", "username profilepic");
   return post;
 };
-/* ===================== DELETE POST ===================== */
+
+
+
+// DELETE POST
 export const deletePostService = async ({ postId, userId }) => {
   const post = await postModel.findById(postId);
 
@@ -57,8 +62,8 @@ export const deletePostService = async ({ postId, userId }) => {
   return { postId };
 };
 
-/* ===================== LIKE / UNLIKE POST ===================== */
-// 1. Accept 'io' in the arguments
+//LIKE / UNLIKE POST
+
 export const toggleLikeService = async ({ postId, userId, io }) => {
   const post = await postModel.findById(postId);
 
@@ -69,13 +74,13 @@ export const toggleLikeService = async ({ postId, userId, io }) => {
   const isLiked = post.likes.includes(userId);
 
   if (isLiked) {
-    // UNLIKE logic...
+    
     post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
   } else {
-    // LIKE logic...
+    
     post.likes.push(userId);
 
-    // 🔔 SEND NOTIFICATION
+    
     if (post.user.toString() !== userId.toString()) {
       await createNotification({
         recipient: post.user,
@@ -83,7 +88,7 @@ export const toggleLikeService = async ({ postId, userId, io }) => {
         type: "LIKE",
         message: "liked your post",
         link: `/post/${postId}`,
-        io: io // <--- 2. PASS IO TO NOTIFICATION SERVICE
+        io: io
       });
     }
   }
@@ -92,11 +97,13 @@ export const toggleLikeService = async ({ postId, userId, io }) => {
   return { postId, likes: post.likes, liked: !isLiked };
 };
 
-/* ===================== ADD COMMENT ===================== */
-// 1. Accept 'io' in the arguments
+
+
+//ADD COMMENT
+
 export const addCommentService = async ({ postId, userId, text, io }) => {
   const post = await postModel.findById(postId);
-  // ... existing validation ...
+
 
   const newComment = {
     user: userId,
@@ -107,7 +114,7 @@ export const addCommentService = async ({ postId, userId, text, io }) => {
   post.comments.push(newComment);
   await post.save();
 
-  // 🔔 SEND NOTIFICATION
+
   if (post.user.toString() !== userId.toString()) {
     await createNotification({
       recipient: post.user,
@@ -115,7 +122,7 @@ export const addCommentService = async ({ postId, userId, text, io }) => {
       type: "COMMENT",
       message: `commented: "${text.substring(0, 20)}..."`,
       link: `/post/${postId}`,
-      io: io // <--- 2. PASS IO TO NOTIFICATION SERVICE
+      io: io
     });
   }
 

@@ -4,17 +4,31 @@ import AppError from "../utils/AppError.js";
 import catchAsync from "../utils/catchAsync.js";
 
 const authMiddleware = catchAsync(async (req, res, next) => {
-  const accessToken = req.cookies?.accessToken;
+  let token;
 
-  if (!accessToken) {
+  
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+  
+  else if (req.cookies && req.cookies.accessToken) {
+    token = req.cookies.accessToken;
+  }
+
+ 
+  if (!token) {
     return next(
       new AppError("Access token missing", 401, "NO_ACCESS_TOKEN")
     );
   }
 
+ 
   let decoded;
   try {
-    decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (err) {
     return next(
       new AppError(
@@ -25,7 +39,8 @@ const authMiddleware = catchAsync(async (req, res, next) => {
     );
   }
 
-  const user = await User.findById(decoded.id).select(
+  
+  const user = await User.findById(decoded.id || decoded._id).select(
     "-password -refreshToken -resetPasswordToken"
   );
 
@@ -35,6 +50,7 @@ const authMiddleware = catchAsync(async (req, res, next) => {
     );
   }
 
+  
   req.user = user;
   next();
 });

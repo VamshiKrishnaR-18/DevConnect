@@ -4,9 +4,9 @@ import { AuthContext } from "../contexts/AuthContext";
 import { useNotification } from "../contexts/NotificationContext"; 
 import { useDarkMode } from "../contexts/DarkModeContext";
 import { getProfileImageSrc } from "../utils/imageUtils";
-import api from "../utils/api"; // <--- Import API
+import api from "../utils/api"; 
 import "./Navbar.css";
-import { Bell, Menu, X, Sun, Moon, LogOut, Search } from "lucide-react"; // <--- Import Search Icon
+import { Bell, Menu, X, Sun, Moon, LogOut, Search, Shield } from "lucide-react"; // <--- Import Shield
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -31,7 +31,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (showUserMenu && !e.target.closest(".user-menu-container")) {
@@ -45,7 +44,7 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showUserMenu, showSearch]);
 
-  // --- SEARCH HANDLER (Debounced) ---
+  // --- SEARCH HANDLER ---
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.trim().length > 0) {
@@ -60,7 +59,7 @@ export default function Navbar() {
         setSearchResults([]);
         setShowSearch(false);
       }
-    }, 300); // Wait 300ms after typing stops
+    }, 300);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
@@ -69,6 +68,7 @@ export default function Navbar() {
     navigate(`/profile/${username}`);
     setShowSearch(false);
     setSearchQuery("");
+    setIsMobileMenuOpen(false);
   };
 
   /* ===================== HANDLERS ===================== */
@@ -90,20 +90,20 @@ export default function Navbar() {
 
         {/* ===================== LOGO ===================== */}
         <Link
-          to={user ? (user.role === "admin" ? "/admin" : "/feed") : "/"}
+          to={user ? "/feed" : "/"} 
           className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent shrink-0 hover:opacity-80 transition-opacity"
         >
           DevConnect
         </Link>
 
-        {/* ===================== SEARCH BAR (Desktop) ===================== */}
+        {/* ===================== SEARCH BAR ===================== */}
         {user && (
-          <div className="hidden md:block flex-1 max-w-md mx-4 relative" ref={searchRef}>
+          <div className="flex-1 max-w-md mx-2 md:mx-4 relative" ref={searchRef}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
-                placeholder="Search developers..."
+                placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery && setShowSearch(true)}
@@ -111,9 +111,8 @@ export default function Navbar() {
               />
             </div>
 
-            {/* Dropdown Results */}
             {showSearch && searchResults.length > 0 && (
-              <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+              <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
                 {searchResults.map((u) => (
                   <div
                     key={u._id}
@@ -135,9 +134,22 @@ export default function Navbar() {
 
         {/* ===================== DESKTOP RIGHT ===================== */}
         <div className="hidden md:flex items-center gap-5 shrink-0">
-          {user && user.role !== "admin" && (
+          
+          {/* Feed Link (Everyone sees this) */}
+          {user && (
             <Link to="/feed" className="font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Feed
+            </Link>
+          )}
+
+          {/* ADMIN PANEL BUTTON (Only Admins See This) */}
+          {user?.role === "admin" && (
+            <Link 
+              to="/admin" 
+              className="flex items-center gap-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 px-3 py-1.5 rounded-lg font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors border border-red-200 dark:border-red-800"
+            >
+              <Shield size={16} />
+              Admin Panel
             </Link>
           )}
 
@@ -147,7 +159,6 @@ export default function Navbar() {
               to="/notifications" 
               onClick={markAllAsRead}
               className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300"
-              title="Notifications"
             >
               <Bell size={20} />
               {unreadCount > 0 && (
@@ -158,7 +169,6 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Dark Mode */}
           <button 
             onClick={toggleDarkMode} 
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300"
@@ -166,7 +176,7 @@ export default function Navbar() {
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          {/* USER MENU */}
+          {/* User Menu */}
           {user ? (
             <div className="relative user-menu-container">
               <button
@@ -181,7 +191,6 @@ export default function Navbar() {
                 />
               </button>
 
-              {/* Dropdown */}
               {showUserMenu && (
                 <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 mb-1 bg-gray-50 dark:bg-gray-800/50">
@@ -216,7 +225,7 @@ export default function Navbar() {
 
         {/* ===================== MOBILE HAMBURGER ===================== */}
         <button
-          className="md:hidden p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+          className="md:hidden p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg shrink-0"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -228,24 +237,6 @@ export default function Navbar() {
         <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 px-4 py-4 space-y-4 shadow-xl animate-in slide-in-from-top-5">
           {user ? (
             <>
-              {/* Mobile Search Input */}
-              <div className="relative mb-4">
-                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                 <input 
-                   type="text" 
-                   placeholder="Search..." 
-                   className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm"
-                   onKeyDown={(e) => {
-                     if(e.key === 'Enter') {
-                       // Simple mobile implementation: navigate to profile if typed exactly, 
-                       // or you could build a dedicated search page.
-                       // For now, let's just close menu
-                       setIsMobileMenuOpen(false);
-                     }
-                   }}
-                 />
-              </div>
-
               <Link 
                 to={`/profile/${user.username}`}
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -262,11 +253,20 @@ export default function Navbar() {
                 </div>
               </Link>
 
-              {user.role !== "admin" && (
-                <Link to="/feed" onClick={() => setIsMobileMenuOpen(false)} className="block py-2.5 font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600">
-                  Feed
+              {/* Mobile Admin Link */}
+              {user.role === "admin" && (
+                <Link 
+                  to="/admin" 
+                  onClick={() => setIsMobileMenuOpen(false)} 
+                  className="flex items-center gap-2 py-2.5 font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 px-3 rounded-lg"
+                >
+                  <Shield size={18} /> Admin Panel
                 </Link>
               )}
+
+              <Link to="/feed" onClick={() => setIsMobileMenuOpen(false)} className="block py-2.5 font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600">
+                Feed
+              </Link>
               
                <Link to="/notifications" onClick={() => setIsMobileMenuOpen(false)} className="flex justify-between items-center py-2.5 font-medium text-gray-700 dark:text-gray-200">
                 <span className="flex items-center gap-2"><Bell size={18}/> Notifications</span>

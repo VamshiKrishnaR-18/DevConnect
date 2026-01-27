@@ -39,9 +39,9 @@ jobs:
         NODE_ENV: "test"
         PORT: 3000
         
-        # --- AUTH SECRETS (Matches your .env) ---
+        # --- AUTH SECRETS  ---
         JWT_SECRET: "DevConnect_Test_Secret"
-        JWT_REFRESH_SECRET: "DevConnect_Test_Refresh_Secret" # 👈 THIS WAS THE MISSING KEY!
+        JWT_REFRESH_SECRET: "DevConnect_Test_Refresh_Secret"
 
         # --- CLOUDINARY (Dummy values to prevent crashes) ---
         CLOUDINARY_CLOUD_NAME: "test_cloud_name"

@@ -1,8 +1,8 @@
 # --- DEPENDENCIES ---
 node_modules/
-# Keep package-lock.json!
 
-# --- ENVIRONMENT VARIABLES (Security!) ---
+
+# --- ENVIRONMENT VARIABLES  ---
 .env
 .env.local
 .env.*

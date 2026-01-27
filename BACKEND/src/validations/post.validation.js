@@ -5,7 +5,7 @@ const objectId = z
   .string()
   .regex(/^[0-9a-fA-F]{24}$/, "Invalid ID");
 
-/* ===================== CREATE TEXT POST ===================== */
+//CREATE TEXT POST
 
 export const createPostSchema = z.object({
   body: z.object({
@@ -18,7 +18,7 @@ registry.register(
   createPostSchema.shape.body
 );
 
-/* ===================== CREATE POST WITH MEDIA ===================== */
+//CREATE POST WITH MEDIA
 
 export const createPostWithMediaSchema = z.object({
   body: z.object({
@@ -31,7 +31,7 @@ registry.register(
   createPostWithMediaSchema.shape.body
 );
 
-/* ===================== GET ALL POSTS (PAGINATION) ===================== */
+//GET ALL POSTS (PAGINATION)
 
 export const getPostsSchema = z.object({
   query: z.object({
@@ -40,7 +40,7 @@ export const getPostsSchema = z.object({
   }),
 });
 
-/* ===================== GET / DELETE POST BY ID ===================== */
+// GET / DELETE POST BY ID
 
 export const postIdParamSchema = z.object({
   params: z.object({

@@ -6,12 +6,14 @@ import {
   followUser,
   unFollowUser,
   updateProfilePic,
-  searchUsers, // <--- 1. Import this
+  searchUsers,
+  updateProfile,
+  updateCoverPic
 } from "../controllers/user.controller.js";
 
 const router = express.Router();
 
-// 2. Add the Search Route
+
 router.get("/search", authMiddleware, searchUsers);
 
 router.get("/profile/:username", authMiddleware, getProfile);
@@ -23,6 +25,15 @@ router.put(
   authMiddleware,
   profilePicUpload.single("profilePic"), 
   updateProfilePic
+);
+
+router.put("/profile", authMiddleware, updateProfile);
+
+router.put(
+  "/cover-pic", 
+  authMiddleware, 
+  profilePicUpload.single("coverPic"),
+  updateCoverPic
 );
 
 export default router;

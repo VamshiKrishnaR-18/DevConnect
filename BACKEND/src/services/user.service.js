@@ -2,58 +2,53 @@ import userModel from "../models/User.model.js";
 import AppError from "../utils/AppError.js";
 import { createNotification } from "./notification.service.js";
 
-/* ===================== FOLLOW USER ===================== */
+//FOLLOW USER
 export const followUserService = async ({ currentUserId, targetUserId }) => {
+  console.log("🔍 DEBUG: Follow Service Called");
+  console.log(`   - Current User ID: ${currentUserId}`);
+  console.log(`   - Target User ID:  ${targetUserId}`);
+
   if (currentUserId.equals(targetUserId)) {
+    console.error("❌ DEBUG: Failed - Self Follow");
     throw new AppError("You cannot follow yourself", 400, "SELF_FOLLOW");
   }
 
-  const [currentUser, targetUser] = await Promise.all([
-    userModel.findById(currentUserId),
-    userModel.findById(targetUserId),
-  ]);
+
+  const currentUser = await userModel.findById(currentUserId);
+  const targetUser = await userModel.findById(targetUserId);
+
+ 
+  if (!currentUser) console.error(`❌ DEBUG: Current User (${currentUserId}) NOT found in DB`);
+  if (!targetUser)  console.error(`❌ DEBUG: Target User (${targetUserId}) NOT found in DB`);
 
   if (!currentUser || !targetUser) {
     throw new AppError("User not found", 404, "USER_NOT_FOUND");
   }
 
+
   if (targetUser.followers.includes(currentUserId)) {
+    console.error("❌ DEBUG: Failed - Already Following");
     throw new AppError("You are already following this user", 400, "ALREADY_FOLLOWING");
   }
+
+  console.log("✅ DEBUG: All checks passed. Updating DB...");
 
   await Promise.all([
     userModel.updateOne({ _id: targetUserId }, { $addToSet: { followers: currentUserId } }),
     userModel.updateOne({ _id: currentUserId }, { $addToSet: { following: targetUserId } }),
   ]);
 
-  // 🔔 Persistent notification
-  await createNotification({
-    recipient: targetUserId,
-    sender: currentUserId,
-    type: "FOLLOW",
-    message: "started following you",
-  });
 
-  const followersCount = targetUser.followers.length + 1;
 
   return {
     followerId: currentUserId,
     followedId: targetUserId,
-    followersCount,
-    events: [
-      {
-        type: "userFollowed",
-        payload: {
-          followerId: currentUserId,
-          followedId: targetUserId,
-          followersCount,
-        },
-      },
-    ],
+    followersCount: targetUser.followers.length + 1,
+    events: [],
   };
 };
 
-/* ===================== UNFOLLOW USER ===================== */
+//UNFOLLOW USER
 export const unfollowUserService = async ({ currentUserId, targetUserId }) => {
   if (currentUserId.equals(targetUserId)) {
     throw new AppError("You cannot unfollow yourself", 400, "SELF_UNFOLLOW");
@@ -96,7 +91,7 @@ export const unfollowUserService = async ({ currentUserId, targetUserId }) => {
   };
 };
 
-/* ===================== UPDATE PROFILE PIC (FIXED) ===================== */
+//UPDATE PROFILE PIC
 export const updateProfilePicService = async (userId, file) => {
   console.log("--> SERVICE: Updating user", userId);
   

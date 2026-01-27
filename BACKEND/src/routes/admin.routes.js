@@ -9,11 +9,16 @@ import {
   deletePost,
   getSettings,
   updateSettings,
+  banUser,
+  getComments,
+  deleteComment
 } from "../controllers/admin.controller.js";
 
-import adminProtect from "../middlewares/admin.middleware.js";
-import validate from "../middlewares/validate.middleware.js";
 
+import protect from "../middlewares/auth.middleware.js"; 
+import adminProtect from "../middlewares/admin.middleware.js"; 
+
+import validate from "../middlewares/validate.middleware.js";
 import {
   deleteUserSchema,
   deletePostSchema,
@@ -22,35 +27,52 @@ import {
 
 const router = express.Router();
 
-/* ===================== DASHBOARD ===================== */
-router.get("/dashboard/stats", adminProtect, getDashboardStats);
-router.get("/dashboard/activity", adminProtect, getRecentActivity);
 
-/* ===================== USERS ===================== */
-router.get("/users", adminProtect, getUsers);
+router.use(protect, adminProtect);
+
+//DASHBOARD
+// /api/admin/stats
+router.get("/stats", getDashboardStats); 
+
+// /api/admin/activity
+router.get("/activity", getRecentActivity);
+
+//USERS
+// /api/admin/users
+router.get("/users", getUsers);
+
+// /api/admin/users/:id/ban
+router.post("/users/:userId/ban", banUser); 
+
+// /api/admin/users/:id
 router.delete(
   "/users/:userId",
-  adminProtect,
   validate(deleteUserSchema),
   deleteUser
 );
 
-/* ===================== POSTS ===================== */
-router.get("/posts", adminProtect, getPosts);
+//POSTS
+// /api/admin/posts
+router.get("/posts", getPosts);
+
+// /api/admin/posts/:id
 router.delete(
   "/posts/:postId",
-  adminProtect,
   validate(deletePostSchema),
   deletePost
 );
 
-/* ===================== SETTINGS ===================== */
-router.get("/settings", adminProtect, getSettings);
+//SETTINGS
+// /api/admin/settings
+router.get("/settings", getSettings);
 router.put(
   "/settings",
-  adminProtect,
   validate(updateSettingsSchema),
   updateSettings
 );
+
+//COMMENTS
+router.get("/comments", getComments);
+router.delete("/comments/:commentId", deleteComment);
 
 export default router;

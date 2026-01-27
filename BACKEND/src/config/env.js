@@ -20,5 +20,5 @@ const envSchema = z.object({
   CLIENT_URL: z.string().url().default("http://localhost:5173"),
 });
 
-// This will throw a clear error if variables are missing
+// Throw a clear error if variables are missing
 export const env = envSchema.parse(process.env);

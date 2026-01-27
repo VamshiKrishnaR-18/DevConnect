@@ -1,8 +1,8 @@
 import multer from "multer";
-import { postMediaStorage } from "../config/cloudinary.js"; // <--- Import from config
+import { postMediaStorage } from "../config/cloudinary.js"; 
 
 export const mediaUpload = multer({
-  storage: postMediaStorage, // <--- MUST be postMediaStorage
+  storage: postMediaStorage,
   limits: { 
     fileSize: 50 * 1024 * 1024, // 50MB
     files: 10 

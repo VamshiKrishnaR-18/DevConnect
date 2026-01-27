@@ -5,7 +5,7 @@ import protect from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.use(protect); // All routes require login
+router.use(protect);
 
 router.get("/", getNotifications);
 router.put("/read", markAsRead);

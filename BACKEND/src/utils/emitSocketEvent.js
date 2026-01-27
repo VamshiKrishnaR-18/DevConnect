@@ -9,12 +9,12 @@ export const emitSocketEvent = (io, type, data) => {
     },
   };
 
-  // 🔔 User-specific notification
+  
   if (data?.recipient) {
     io.to(`user:${data.recipient}`).emit(type, payload);
     return;
   }
 
-  // 🌍 Global event (posts, likes, comments)
+
   io.emit(type, payload);
 };

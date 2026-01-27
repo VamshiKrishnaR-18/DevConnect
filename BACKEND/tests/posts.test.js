@@ -12,20 +12,20 @@ describe("Posts API (protected)", () => {
       await mongoose.connect(process.env.MONGO_URI);
     }
 
-    // Register
+   
     await agent.post("/api/auth/register").send({
       username: `posttest_${unique}`,
       email: `posttest_${unique}@example.com`,
       password: "Password@123",
     });
 
-    // Login
+   
     const loginRes = await agent.post("/api/auth/login").send({
       email: `posttest_${unique}@example.com`,
       password: "Password@123",
     });
 
-    // Extract Cookie
+    
     const cookies = loginRes.headers['set-cookie'];
     if (cookies) cookieString = cookies[0].split(';')[0];
   });
@@ -37,19 +37,19 @@ describe("Posts API (protected)", () => {
   it("should create a post when authenticated", async () => {
     const res = await agent
       .post("/api/posts")
-      .set("Cookie", cookieString) // Ensure cookie is set
+      .set("Cookie", cookieString)
       .send({ content: "This is a protected test post" });
 
-    // --- DEBUGGING BLOCK ---
+   
     if (res.statusCode !== 201) {
       console.error("❌ Create Post Failed:", res.body);
     }
-    // -----------------------
+    
 
     expect(res.statusCode).toBe(201);
     expect(res.body.success).toBe(true);
 
-    // Dynamic Check: Handle { data: post }, { post: post }, or { data: { post: ... } }
+    
     const postData = res.body.data?.post || res.body.data || res.body.post;
     
     if (!postData) {

@@ -4,21 +4,21 @@ const objectId = z
   .string()
   .regex(/^[0-9a-fA-F]{24}$/, "Invalid ID format");
 
-/* ===================== DELETE USER ===================== */
+//DELETE USER
 export const deleteUserSchema = z.object({
   params: z.object({
     userId: objectId,
   }),
 });
 
-/* ===================== DELETE POST ===================== */
+//DELETE POST
 export const deletePostSchema = z.object({
   params: z.object({
     postId: objectId,
   }),
 });
 
-/* ===================== UPDATE SETTINGS ===================== */
+//UPDATE SETTINGS
 export const updateSettingsSchema = z.object({
   body: z.object({
     siteName: z.string().min(1).optional(),

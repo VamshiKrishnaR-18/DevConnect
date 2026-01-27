@@ -4,7 +4,7 @@ const objectId = z
   .string()
   .regex(/^[0-9a-fA-F]{24}$/, "Invalid user ID");
 
-/* ===================== GET PROFILE ===================== */
+//GET PROFILE
 export const getProfileSchema = z.object({
   params: z.object({
     username: z
@@ -13,14 +13,14 @@ export const getProfileSchema = z.object({
   }),
 });
 
-/* ===================== FOLLOW / UNFOLLOW ===================== */
+//FOLLOW / UNFOLLOW
 export const followUserSchema = z.object({
   params: z.object({
     id: objectId,
   }),
 });
 
-/* ===================== UPDATE PROFILE PIC ===================== */
+//UPDATE PROFILE PIC
 export const updateProfilePicSchema = z.object({
   file: z.any(),
 });

@@ -2,7 +2,7 @@ import { registry } from "./openapi.js";
 import { z } from "zod";
 import { createPostSchema } from "../validations/post.validation.js";
 
-/* ================== CREATE POST ================== */
+//CREATE POST
 registry.registerPath({
   method: "post",
   path: "/posts",
@@ -26,7 +26,7 @@ registry.registerPath({
   },
 });
 
-/* ================== GET POSTS ================== */
+//GET POSTS
 registry.registerPath({
   method: "get",
   path: "/posts",
@@ -44,7 +44,9 @@ registry.registerPath({
   },
 });
 
-/* ================== DELETE POST ================== */
+
+
+//DELETE POST
 registry.registerPath({
   method: "delete",
   path: "/posts/{id}",
@@ -64,7 +66,8 @@ registry.registerPath({
   },
 });
 
-/* ================== TOGGLE LIKE ================== */
+
+//TOGGLE LIKE
 registry.registerPath({
   method: "put",
   path: "/likes/{postId}",

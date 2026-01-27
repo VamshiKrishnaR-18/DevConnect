@@ -4,7 +4,7 @@ import {
   markNotificationsReadService 
 } from "../services/notification.service.js";
 
-/* ===================== GET NOTIFICATIONS ===================== */
+//GET NOTIFICATIONS
 export const getNotifications = catchAsync(async (req, res) => {
   const notifications = await getUserNotificationsService(req.user._id);
 
@@ -15,7 +15,7 @@ export const getNotifications = catchAsync(async (req, res) => {
   });
 });
 
-/* ===================== MARK AS READ ===================== */
+//MARK AS READ
 export const markAsRead = catchAsync(async (req, res) => {
   await markNotificationsReadService(req.user._id);
 

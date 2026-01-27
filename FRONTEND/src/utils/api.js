@@ -1,35 +1,42 @@
 import axios from "axios";
 
-// 1. DYNAMIC BASE URL (The Fix)
-// - In PROD (Vercel): Uses 'VITE_API_URL' (e.g., https://devconnect-api.onrender.com/api)
-// - In DEV (Local): Falls back to "/api", which uses the Vite Proxy to talk to localhost:3000
-const BASE_URL = import.meta.env.VITE_API_URL || "/api";
-
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: "/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// 2. YOUR INTERCEPTORS (Kept exactly the same)
-// Silence expected 401 for auth checks
+// Separate instance for refreshing (No interceptors attached)
+const refreshApi = axios.create({
+  baseURL: "/api",
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
+});
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Check for both /auth/me AND /auth/refresh
-    const isAuthCheck =
-      (error.config?.url?.includes("/auth/me") || 
-       error.config?.url?.includes("/auth/refresh")) &&
-      error.response?.status === 401;
+  async (error) => {
+    const originalRequest = error.config;
 
-    if (isAuthCheck) {
-      // Not logged in — normal case, don't log as error
-      return Promise.reject(error);
+    // IF 401 (Unauthorized) AND we haven't retried yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // Mark as retried
+
+      try {
+        // 1. Try to refresh the token
+        await refreshApi.post("/auth/refresh");
+
+        // 2. Retry the original request (e.g., /auth/me or /cover-pic)
+        return api(originalRequest);
+      } catch (refreshError) {
+        // 3. If Refresh Fails: DO NOT RELOAD PAGE.
+        // Just reject the promise. The UI will handle "Not Logged In".
+        return Promise.reject(refreshError);
+      }
     }
 
-    console.error("API Error:", error);
     return Promise.reject(error);
   }
 );
