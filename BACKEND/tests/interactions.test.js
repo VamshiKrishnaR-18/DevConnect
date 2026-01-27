@@ -96,15 +96,12 @@ describe("Social Interactions (Likes & Comments)", () => {
     
     expect(res.statusCode).toBe(201);
     
+   
+    const createdComment = res.body.data;
     
-    const data = res.body.data?.post || res.body.data || res.body.post;
-    const comments = Array.isArray(data) ? data : (data.comments || []);
     
-    const found = comments.some 
-        ? comments.some(c => c.text === "Test comment") 
-        : (data.text === "Test comment");
-    
-    expect(found).toBe(true);
+    expect(createdComment.content).toBe("Test comment");
+    expect(createdComment.user).toBeDefined();
   });
 
   it("DELETE /api/posts/:id - Should delete the post", async () => {
