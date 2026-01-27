@@ -54,12 +54,12 @@ export const registerUser = catchAsync(async (req, res, next) => {
     return next(new AppError("User already exists", 400, "USER_EXISTS"));
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+
 
   await User.create({
     username,
     email,
-    password: hashedPassword,
+    password,
   });
 
   res.status(201).json({
