@@ -94,7 +94,7 @@ describe("Social Interactions (Likes & Comments)", () => {
       .send({ text: "Test comment" });
 
     
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(201);
     
     
     const data = res.body.data?.post || res.body.data || res.body.post;
