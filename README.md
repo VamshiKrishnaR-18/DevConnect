@@ -33,13 +33,6 @@
 
 ---
 
-## 📸 Visual Walkthrough
-
-*(Tip: Add a 5-second GIF here showing a post being liked in real-time)*
-
-![Dashboard Preview](https://via.placeholder.com/800x450?text=Insert+Your+Project+Screenshot+Here)
-
----
 
 ## 📐 System Architecture
 
