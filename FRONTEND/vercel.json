@@ -17,7 +17,7 @@
         },
         {
           "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
+          "value": "GET, POST, PUT, DELETE, PATCH, OPTIONS"
         },
         {
           "key": "Access-Control-Allow-Headers",
@@ -28,12 +28,16 @@
   ],
   "rewrites": [
     {
+      "source": "/api-docs",
+      "destination": "https://devconnect-f4au.onrender.com/api-docs"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "https://devconnect-f4au.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
-      "destination": "/"
+      "destination": "/index.html"
     }
   ]
 }

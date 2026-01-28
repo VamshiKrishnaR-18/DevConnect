@@ -15,8 +15,13 @@ import { maintenanceMiddleware } from "./middlewares/maintenance.middleware.js";
 import AppError from "./utils/AppError.js";
 import { de } from "zod/v4/locales";
 
+import swaggerUi from "swagger-ui-express";
+import { generateOpenAPISpec } from "./docs/openapi.js";
+
+const openApiSpec = generateOpenAPISpec();
 const app = express();
 
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 app.use(
   cors({

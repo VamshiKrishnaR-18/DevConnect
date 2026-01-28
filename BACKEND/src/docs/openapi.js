@@ -5,7 +5,6 @@ import {
   extendZodWithOpenApi,
 } from "@asteasolutions/zod-to-openapi";
 
-
 extendZodWithOpenApi(z);
 
 export const registry = new OpenAPIRegistry();
@@ -22,7 +21,12 @@ export const generateOpenAPISpec = () => {
     },
     servers: [
       {
+        url: "https://devconnect-f4au.onrender.com/api",
+        description: "Production Server",
+      },
+      {
         url: "http://localhost:5000/api",
+        description: "Local Development",
       },
     ],
   });
