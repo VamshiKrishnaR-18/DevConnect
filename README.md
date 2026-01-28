@@ -47,7 +47,7 @@ DevConnect is built on a decoupled architecture for scalability:
 ## 📄 API Documentation
 
 The backend includes full OpenAPI/Swagger documentation.
-- **Live Swagger UI:** [https://dev-connect-sigma-five.vercel.app/api-docs](https://dev-connect-sigma-five.vercel.app/api-docs)
+- **Live Swagger UI:** [https://devconnect-f4au.onrender.com/api-docs/](https://devconnect-f4au.onrender.com/api-docs/))
 
 ---
 
