@@ -1,73 +1,76 @@
-# 👨‍💻 DevConnect
+# 🌐 DevConnect - Social Networking for Developers
 
-> **The Social Platform for Developers.**
-> Network, share projects, and collaborate in real-time.
+[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://dev-connect-sigma-five.vercel.app/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Visit_Now-2ea44f?style=for-the-badge&logo=vercel)](https://dev-connect-sigma-five.vercel.app/)
-![Tech Stack](https://img.shields.io/badge/MERN-Stack-blue?style=flat&logo=react)
-![Build Status](https://img.shields.io/badge/Build-Passing-success)
-![License](https://img.shields.io/badge/License-ISC-yellow)
+**DevConnect** is a specialized full-stack social platform designed for developers to share insights, showcase projects, and engage in real-time technical discussions. 
 
-**🔗 Live URL:** [https://dev-connect-sigma-five.vercel.app/](https://dev-connect-sigma-five.vercel.app/)
+> **Note:** This project is currently in active development 🛠️. New features and performance optimizations are being pushed weekly.
 
 ---
 
-## 📖 Table of Contents
-- [✨ Key Features](#-key-features)
-- [🛠️ Tech Stack](#-tech-stack)
-- [⚙️ Prerequisites](#-prerequisites)
-- [🚀 Installation & Setup](#-installation--setup)
-- [🔧 Environment Variables](#-environment-variables)
-- [🏃‍♂️ Running the App](#-running-the-app)
-- [🧪 Testing](#-testing)
-- [🛡️ Admin Panel](#-admin-panel)
-- [📚 API Documentation](#-api-documentation)
-- [📂 Project Structure](#-project-structure)
+## 🚀 Key Features
 
----
-
-## ✨ Key Features
-
-- **🔐 Advanced Authentication**: Secure JWT-based auth (Access + Refresh Tokens) with password reset functionality.
-- **📱 Dynamic Social Feed**: Create rich posts with text, images, and videos. Supports infinite scrolling and media optimization.
-- **⚡ Real-time Interaction**: Instant notifications, likes, and comments powered by **Socket.io**.
-- **👤 Developer Profiles**: Showcase GitHub stats, portfolios, and technical skills in a customizable profile.
-- **🛡️ Admin Dashboard**: Dedicated administrative control for managing users and content, secured with role-based access.
-- **☁️ Cloud Media**: Seamless image and video uploads utilizing **Cloudinary** for storage and optimization.
+- **Real-time Interactions:** Instant notifications for likes and comments powered by **Socket.io**.
+- **Developer Profiles:** Customizable profiles featuring professional details, profile pictures (Cloudinary), and activity feeds.
+- **Dynamic Content:** Create, edit, and delete posts with full media support and interactive comment sections.
+- **Secure Authentication:** Robust JWT-based auth with HTTP-only cookies and secure password hashing.
+- **Advanced Admin Suite:** Dedicated dashboard for user management, system health monitoring, and audit logs.
+- **Modern UI/UX:** Responsive design built with **Tailwind CSS** and **Shadcn UI**, including a dark mode toggle.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### **Frontend**
-- **Core**: React 19, Vite
-- **Styling**: Tailwind CSS
-- **State & Data**: React Query (@tanstack/react-query), Context API
-- **Routing**: React Router DOM
-- **Deployment**: Vercel
-
-### **Backend**
-- **Server**: Node.js, Express 5.x
-- **Database**: MongoDB, Mongoose
-- **Validation**: Zod
-- **API Docs**: Swagger / OpenAPI
-- **Real-time**: Socket.io
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 19, Vite, Tailwind CSS, Shadcn UI, Axios, Framer Motion |
+| **Backend** | Node.js, Express.js, Socket.io, Zod (Validation), Multer |
+| **Database** | MongoDB Atlas (Mongoose ODM) |
+| **Testing** | Jest, Supertest (Backend), Playwright (E2E) |
+| **DevOps** | Vercel (Deployment), Cloudinary (Media), GitHub Actions (CI) |
 
 ---
 
-## ⚙️ Prerequisites
+## 📸 Visual Walkthrough
 
-Ensure you have the following installed:
-- **Node.js** (v18+)
-- **npm** (or yarn/pnpm)
-- **MongoDB** (Local instance or Atlas connection string)
-- **Cloudinary Account** (API Key & Secret)
+*(Tip: Add a 5-second GIF here showing a post being liked in real-time)*
+
+![Dashboard Preview](https://via.placeholder.com/800x450?text=Insert+Your+Project+Screenshot+Here)
 
 ---
 
-## 🚀 Installation & Setup
+## 📐 System Architecture
 
-1. **Clone the Repository**
-   ```bash
-   git clone [https://github.com/VamshiKrishnaR-18/DevConnect.git](https://github.com/VamshiKrishnaR-18/DevConnect.git)
-   cd DevConnect
+DevConnect is built on a decoupled architecture for scalability:
+- **Client:** A high-performance SPA built with Vite.
+- **API:** A RESTful Node.js server using a Service-Controller pattern for clean code separation.
+- **Real-time:** A WebSocket layer for bi-directional event handling.
+- **Security:** Implements Helmet.js for header protection, express-rate-limit to prevent abuse, and Zod for strict schema validation.
+
+---
+
+## 📄 API Documentation
+
+The backend includes full OpenAPI/Swagger documentation.
+- **Live Swagger UI:** [https://dev-connect-sigma-five.vercel.app/api-docs](https://dev-connect-sigma-five.vercel.app/api-docs)
+
+---
+
+## 🧪 Testing & Quality Assurance
+
+Quality is a priority. This project includes:
+- **Integration Tests:** Testing API endpoints and database logic with Jest.
+- **E2E Testing:** Automated user flow testing with Playwright.
+- **Validation:** 100% of incoming request data is validated via Zod schemas.
+
+To run tests locally:
+```bash
+cd BACKEND
+npm test
+
+👨‍💻 Author
+Vamshi Krishna Ramagani 2025 B.Tech IT Graduate | Aspiring Full-Stack Developer
+
+LinkedIn: https://www.linkedin.com/in/vamshi-krishna-ramagani-88871431b/
